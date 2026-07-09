@@ -1,0 +1,4 @@
+[submodule "sxcapi"]
+	path = app/src/main/rust/sxcapi
+	url = https://github.com/easeatten/sxcapi.git
+	branch = main

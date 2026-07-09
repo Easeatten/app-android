@@ -1,0 +1,3 @@
+[crates.sxcapi.bindings.kotlin]
+android = true
+package_name = "sxcapi"

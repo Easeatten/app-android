@@ -1,0 +1,16 @@
+*.iml
+.DS_Store
+.cxx
+.externalNativeBuild
+.gradle
+local.properties
+/.direnv
+/.envrc
+/.idea/assetWizardSettings.xml
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/navEditor.xml
+/.idea/workspace.xml
+/build
+/captures

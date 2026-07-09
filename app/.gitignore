@@ -1,0 +1,7 @@
+/build
+/src/main/kotlin/generated
+
+# UniFFI artifacts
+/src/main/jniLibs/*/libocrs-*.so
+/src/main/jniLibs/*/librten-*.so
+/src/main/jniLibs/*/libsxcapi.so
