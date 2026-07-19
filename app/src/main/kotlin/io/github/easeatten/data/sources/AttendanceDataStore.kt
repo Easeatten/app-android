@@ -16,6 +16,7 @@ import sxcapi.AttendanceData as SxcapiAttendanceData
 @Serializable
 data class AttendanceRecord(
     val subject: String = "",
+    val subjectPractical: Boolean = false,
     val attended: UInt = 0u,
     val delivered: UInt = 0u,
 )
@@ -32,11 +33,12 @@ fun SxcapiAttendanceData.toAttendanceData(): AttendanceData =
         valid = true,
         name = this.name,
         records =
-            this.records.map {
+            this.subjects.map {
               AttendanceRecord(
                   subject = it.name ?: it.code ?: "Unknown",
-                  attended = it.attended,
-                  delivered = it.delivered,
+                  subjectPractical = it.code?.endsWith("P") ?: false,
+                  attended = it.records.sumOf { record -> record.attended },
+                  delivered = it.records.sumOf { record -> record.delivered },
               )
             },
     )

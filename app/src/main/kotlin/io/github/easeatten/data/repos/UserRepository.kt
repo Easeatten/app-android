@@ -25,13 +25,7 @@ class UserRepository(
   // Backend `Session` object. It can perform several actions pertaining to a `Student`, including
   // fetching attendance records, among other things. The backend is written in Rust and ported
   // over with Kotlin FFI bindings.
-  //
-  // Model loading is required for its in-built OCR engine.
-  private val sxcapiSession =
-      Session.newWithOcr(
-          context.assets.open("models/text-detection.rten").use { it.readBytes() },
-          context.assets.open("models/text-recognition.rten").use { it.readBytes() },
-      )
+  private val sxcapiSession = Session()
   private val sxcapiMutex = Mutex()
 
   val loginFlow = context.LoginDataStore.data
