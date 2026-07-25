@@ -8,6 +8,9 @@ dependencies {
   implementation(libs.androidx.activity.compose)
   implementation(libs.androidx.core.splashscreen)
   implementation(libs.androidx.datastore)
+  implementation(libs.androidx.glance)
+  implementation(libs.androidx.glance.appwidget)
+  implementation(libs.androidx.glance.material3)
   implementation(libs.androidx.navigation.compose)
   implementation(libs.jna) {
     artifact {

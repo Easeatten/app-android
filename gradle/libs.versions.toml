@@ -4,6 +4,7 @@ lib-androidx-compose-bom = "2026.06.01"
 lib-androidx-core-splashscreen = "1.2.0"
 lib-androidx-datastore = "1.2.1"
 lib-androidx-espresso-core = "3.7.0"
+lib-androidx-glance = "1.1.1"
 lib-androidx-junit = "1.3.0"
 lib-jna = "5.19.1"
 lib-junit = "4.13.2"
@@ -12,6 +13,7 @@ lib-serialization-json = "1.11.0"
 plug-android-application = "9.2.1"
 plug-kotlin-compose = "2.4.0"
 plug-kotlin-serialization = "2.4.0"
+glance-preview = "1.1.1"
 
 [libraries]
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "lib-androidx-activity-compose" }
@@ -23,11 +25,15 @@ androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-te
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "lib-androidx-core-splashscreen" }
 androidx-datastore = { group = "androidx.datastore", name = "datastore", version.ref = "lib-androidx-datastore" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "lib-androidx-espresso-core" }
+androidx-glance = { group = "androidx.glance", name = "glance", version.ref = "lib-androidx-glance" }
+androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "lib-androidx-glance" }
+androidx-glance-material3 = { group = "androidx.glance", name = "glance-material3", version.ref = "lib-androidx-glance" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "lib-androidx-junit" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "lib-navigation-compose" }
 jna = { group = "net.java.dev.jna", name = "jna", version.ref = "lib-jna" }
 junit = { group = "junit", name = "junit", version.ref = "lib-junit" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "lib-serialization-json" }
+androidx-glance-preview = { group = "androidx.glance", name = "glance-preview", version.ref = "glance-preview" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "plug-android-application" }
