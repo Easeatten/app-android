@@ -10,6 +10,8 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.util.Calendar
 import java.util.Date
+import kotlin.math.ceil
+import kotlin.math.floor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -24,7 +26,21 @@ data class AttendanceRecord(
     val attended: UInt = 0u,
     val delivered: UInt = 0u,
     val professors: List<String>,
-)
+) {
+  fun getPercentage(): Float {
+    if (this.delivered == 0u) return 1.0f
+    return this.attended.toFloat() / this.delivered.toFloat()
+  }
+
+  fun getScore(target: Float): Int {
+    return if (this.getPercentage() >= target) {
+          floor((this.attended.toInt() - target * this.delivered.toInt()) / target)
+        } else {
+          -ceil((target * this.delivered.toInt() - attended.toInt()) / (1.0f - target))
+        }
+        .toInt()
+  }
+}
 
 @Serializable
 data class AttendanceData(
@@ -44,6 +60,11 @@ data class AttendanceData(
           )
           .build()
           .time
+
+  fun getAggregatePercentage(): Float {
+    if (this.records.isEmpty()) return 1.0f
+    return records.fold(0.0f) { acc, record -> acc + record.getPercentage() } / this.records.size
+  }
 }
 
 fun SxcapiAttendanceData.toAttendanceData(): AttendanceData =
