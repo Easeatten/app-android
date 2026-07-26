@@ -19,4 +19,7 @@
         OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
         SOFTWARE.
     </string>
+    <string name="widget_meta_attendance_description">
+        See summarized attendance info at a glance
+    </string>
 </resources>
