@@ -11,10 +11,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
+import androidx.glance.GlanceComposable
+import androidx.glance.GlanceTheme
+import androidx.glance.material3.ColorProviders
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.easeatten.data.repos.SettingsRepository
 import io.github.easeatten.data.repos.UserRepository
+import io.github.easeatten.data.sources.SettingsData
 import io.github.easeatten.ui.theme.colorscheme.isDynamicColorSupported
 import io.github.easeatten.ui.viewmodels.SimpleViewModel
 import io.github.easeatten.ui.viewmodels.SimpleViewModelFactory
@@ -56,6 +60,23 @@ fun ThemeManager(content: @Composable () -> Unit) {
             }
           },
       typography = settings.themeTypography.get().typography,
+      content = content,
+  )
+}
+
+@GlanceComposable
+@Composable
+fun GlanceThemeManager(settings: SettingsData, content: @GlanceComposable @Composable () -> Unit) {
+  GlanceTheme(
+      colors =
+          when {
+            isDynamicColorSupported -> GlanceTheme.colors
+            else ->
+                ColorProviders(
+                    light = settings.themeColorScheme.get().getColorScheme(false),
+                    dark = settings.themeColorScheme.get().getColorScheme(true),
+                )
+          },
       content = content,
   )
 }
