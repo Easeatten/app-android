@@ -29,6 +29,8 @@ data class SettingsData(
     val themeDynamicColor: Boolean = false,
     // The fonts used as part of the app theme.
     val themeTypography: Typography = Typography.DEFAULT,
+    // The per-subject percentage threshold set by the user.
+    val attendanceTargetPercentage: Float = 0.75f,
 )
 
 object SettingsSerializer : Serializer<SettingsData> {
