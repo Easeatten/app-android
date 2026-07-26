@@ -46,12 +46,10 @@ fun HomePageDashboard(
 
   val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
   val greeting =
-      if (hour in 5..11) {
-        "Morning"
-      } else if (hour in 12..16) {
-        "Afternoon"
-      } else {
-        "Evening"
+      when (hour) {
+        in 5..11 -> "Morning"
+        in 12..16 -> "Afternoon"
+        else -> "Evening"
       }
 
   Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
