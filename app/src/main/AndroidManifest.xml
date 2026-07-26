@@ -9,6 +9,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Easeatten.Splash">
+        <receiver android:name=".ui.widgets.AttendanceGlanceReceiver"
+            android:label="Attendance"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_meta_attendance" />
+        </receiver>
         <activity
             android:name=".MainActivity"
             android:exported="true">
