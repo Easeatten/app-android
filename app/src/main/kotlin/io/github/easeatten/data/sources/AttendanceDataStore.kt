@@ -8,6 +8,8 @@ import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStore
 import java.io.InputStream
 import java.io.OutputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -54,11 +56,10 @@ object AttendanceSerializer : Serializer<AttendanceData> {
     }
   }
 
-  override suspend fun writeTo(
-      t: AttendanceData,
-      output: OutputStream,
-  ) {
-    output.write(Json.encodeToString(t.copy(valid = true)).encodeToByteArray())
+  override suspend fun writeTo(t: AttendanceData, output: OutputStream) {
+    withContext(Dispatchers.IO) {
+      output.write(Json.encodeToString(t.copy(valid = true)).encodeToByteArray())
+    }
   }
 }
 
