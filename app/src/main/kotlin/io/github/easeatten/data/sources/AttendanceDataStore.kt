@@ -8,6 +8,8 @@ import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStore
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.Calendar
+import java.util.Date
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -21,19 +23,36 @@ data class AttendanceRecord(
     val subjectPractical: Boolean = false,
     val attended: UInt = 0u,
     val delivered: UInt = 0u,
+    val professors: List<String>,
 )
 
 @Serializable
 data class AttendanceData(
     val valid: Boolean = false,
     val name: String = "",
+    val lastUpdatedYear: UInt = 0u,
+    val lastUpdatedMonth: UInt = 0u,
+    val lastUpdatedDay: UInt = 0u,
     val records: List<AttendanceRecord> = listOf(),
-)
+) {
+  fun getLastUpdatedDate(): Date =
+      Calendar.Builder()
+          .setDate(
+              this.lastUpdatedYear.toInt(),
+              this.lastUpdatedMonth.toInt(),
+              this.lastUpdatedDay.toInt(),
+          )
+          .build()
+          .time
+}
 
 fun SxcapiAttendanceData.toAttendanceData(): AttendanceData =
     AttendanceData(
         valid = true,
         name = this.name,
+        lastUpdatedYear = this.lastUpdatedYear,
+        lastUpdatedMonth = this.lastUpdatedMonth,
+        lastUpdatedDay = this.lastUpdatedDay,
         records =
             this.subjects.map {
               AttendanceRecord(
@@ -41,6 +60,7 @@ fun SxcapiAttendanceData.toAttendanceData(): AttendanceData =
                   subjectPractical = it.code?.endsWith("P") ?: false,
                   attended = it.records.sumOf { record -> record.attended },
                   delivered = it.records.sumOf { record -> record.delivered },
+                  professors = it.records.mapNotNull { record -> record.professor },
               )
             },
     )
