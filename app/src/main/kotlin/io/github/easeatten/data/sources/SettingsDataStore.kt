@@ -10,6 +10,8 @@ import io.github.easeatten.ui.theme.colorscheme.ColorScheme
 import io.github.easeatten.ui.theme.typography.Typography
 import java.io.InputStream
 import java.io.OutputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -27,6 +29,8 @@ data class SettingsData(
     val themeDynamicColor: Boolean = false,
     // The fonts used as part of the app theme.
     val themeTypography: Typography = Typography.DEFAULT,
+    // The per-subject percentage threshold set by the user.
+    val attendanceTargetPercentage: Float = 0.75f,
 )
 
 object SettingsSerializer : Serializer<SettingsData> {
@@ -40,11 +44,10 @@ object SettingsSerializer : Serializer<SettingsData> {
     }
   }
 
-  override suspend fun writeTo(
-      t: SettingsData,
-      output: OutputStream,
-  ) {
-    output.write(Json.encodeToString(t.copy(valid = true)).encodeToByteArray())
+  override suspend fun writeTo(t: SettingsData, output: OutputStream) {
+    withContext(Dispatchers.IO) {
+      output.write(Json.encodeToString(t.copy(valid = true)).encodeToByteArray())
+    }
   }
 }
 

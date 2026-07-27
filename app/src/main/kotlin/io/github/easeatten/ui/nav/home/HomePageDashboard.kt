@@ -16,7 +16,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -42,16 +41,15 @@ fun HomePageDashboard(
 ) {
   if (!attendance.valid) return
 
-  val firstName = vm.getAttendanceFirstName(attendance)
+  val firstName =
+      attendance.name.substringBefore(' ').lowercase().replaceFirstChar { it.uppercase() }
 
   val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
   val greeting =
-      if (hour in 5..11) {
-        "Morning"
-      } else if (hour in 12..16) {
-        "Afternoon"
-      } else {
-        "Evening"
+      when (hour) {
+        in 5..11 -> "Morning"
+        in 12..16 -> "Afternoon"
+        else -> "Evening"
       }
 
   Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
@@ -62,7 +60,7 @@ fun HomePageDashboard(
     )
 
     LazyVerticalStaggeredGrid(columns = StaggeredGridCells.Adaptive(300.dp)) {
-      item { AttendanceCard(vm, attendance) }
+      item { AttendanceCard(vm, attendance, settings) }
     }
   }
 }
@@ -71,9 +69,8 @@ fun HomePageDashboard(
 internal fun AttendanceCard(
     vm: HomeViewModel,
     attendance: AttendanceData,
+    settings: SettingsData,
 ) {
-  val attendancePercentage = vm.getAttendancePercentage(attendance)
-
   ElevatedCard(
       elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
       modifier = Modifier.fillMaxWidth().padding(5.dp),
@@ -88,7 +85,7 @@ internal fun AttendanceCard(
         Text(text = "Attendance", style = MaterialTheme.typography.titleLarge)
 
         Text(
-            text = "${floor(attendancePercentage * 100)}%",
+            text = "${floor(attendance.getAggregatePercentage() * 100).toInt()}%",
             style = MaterialTheme.typography.titleLarge,
         )
       }
@@ -113,11 +110,8 @@ internal fun AttendanceCard(
         )
       }
 
-      val attendanceThreshold = 0.75f // TODO: pull in from preferences
-
-      attendance.records.forEachIndexed { index, record ->
-        val dues = vm.getAttendanceDues(attendance, index, attendanceThreshold)
-        val extras = vm.getAttendanceExtras(attendance, index, attendanceThreshold)
+      attendance.records.forEach { record ->
+        val score = record.getScore(settings.attendanceTargetPercentage)
 
         Row(modifier = Modifier.fillMaxWidth()) {
           Text(
@@ -132,17 +126,12 @@ internal fun AttendanceCard(
 
           Row {
             Text(
-                text = dues.toString(),
+                text = score.toString(),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
-            )
-
-            Spacer(modifier = Modifier.padding(horizontal = 5.dp))
-
-            Text(
-                text = extras.toString(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.tertiary,
+                color =
+                    if (score < 0) MaterialTheme.colorScheme.error
+                    else if (score == 0) MaterialTheme.colorScheme.secondary
+                    else MaterialTheme.colorScheme.tertiary,
             )
           }
         }

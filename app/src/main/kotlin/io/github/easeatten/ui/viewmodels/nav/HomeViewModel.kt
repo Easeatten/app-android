@@ -11,8 +11,6 @@ import io.github.easeatten.data.sources.SettingsData
 import io.github.easeatten.ui.nav.home.HomeDestination
 import io.github.easeatten.ui.theme.colorscheme.ColorScheme
 import io.github.easeatten.ui.theme.typography.Typography
-import kotlin.math.ceil
-import kotlin.math.floor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -74,54 +72,6 @@ class HomeViewModel(
 
   fun logout() {
     viewModelScope.launch { userRepository.unregisterUser() }
-  }
-
-  fun getAttendanceFirstName(attendance: AttendanceData): String =
-      attendance.name.substringBefore(' ').lowercase().replaceFirstChar { it.uppercase() }
-
-  fun getAttendancePercentage(attendance: AttendanceData): Float {
-    val a = attendance.records.fold(0f) { acc, record -> acc + record.attended.toInt() }
-    val d = attendance.records.fold(0f) { acc, record -> acc + record.delivered.toInt() }
-
-    return if (d > 0) a / d else 1.0f
-  }
-
-  fun getAttendancePercentage(
-      attendance: AttendanceData,
-      index: Int,
-  ): Float {
-    assert(index >= 0 && index < attendance.records.size)
-
-    val a = attendance.records[index].attended.toFloat()
-    val d = attendance.records[index].delivered.toFloat()
-
-    return if (d > 0) a / d else 1f
-  }
-
-  fun getAttendanceExtras(
-      attendance: AttendanceData,
-      index: Int,
-      threshold: Float,
-  ): UInt {
-    assert(index >= 0 && index < attendance.records.size)
-
-    val a = attendance.records[index].attended.toFloat()
-    val d = attendance.records[index].delivered.toFloat()
-
-    return floor((a - threshold * d) / threshold).toUInt()
-  }
-
-  fun getAttendanceDues(
-      attendance: AttendanceData,
-      index: Int,
-      threshold: Float,
-  ): UInt {
-    assert(index >= 0 && index < attendance.records.size)
-
-    val a = attendance.records[index].attended.toFloat()
-    val d = attendance.records[index].delivered.toFloat()
-
-    return ceil((threshold * d - a) / (1f - threshold)).toUInt()
   }
 }
 
