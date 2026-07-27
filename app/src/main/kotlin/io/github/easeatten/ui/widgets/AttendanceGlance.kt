@@ -111,14 +111,14 @@ class AttendanceGlance : GlanceAppWidget() {
     Scaffold(
         modifier =
             GlanceModifier.fillMaxSize()
-                .padding(10.dp)
+                .padding(5.dp)
                 .clickable(actionStartActivity<MainActivity>()),
         backgroundColor = GlanceTheme.colors.surface,
         titleBar = { if (showContentTitleBar) ContentTitleBar(attendance) },
     ) {
       Column(
           modifier =
-              if (showContentSubjectList) GlanceModifier.fillMaxSize().padding(bottom = 10.dp)
+              if (showContentSubjectList) GlanceModifier.fillMaxSize().padding(bottom = 15.dp)
               else GlanceModifier.fillMaxSize(),
           verticalAlignment =
               if (showContentSubjectList) Alignment.Top else Alignment.CenterVertically,
