@@ -13,6 +13,7 @@ lib-serialization-json = "1.11.0"
 plug-android-application = "9.2.1"
 plug-kotlin-compose = "2.4.0"
 plug-kotlin-serialization = "2.4.0"
+plug-ncorti-ktfmt = "0.26.0"
 
 [libraries]
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "lib-androidx-activity-compose" }
@@ -38,3 +39,4 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 android-application = { id = "com.android.application", version.ref = "plug-android-application" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "plug-kotlin-compose" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "plug-kotlin-serialization" }
+ncorti-ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "plug-ncorti-ktfmt" }
