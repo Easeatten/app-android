@@ -29,59 +29,59 @@ import io.github.easeatten.ui.viewmodels.SplashScreenViewModel
 
 @Composable
 fun NavManager() {
-  val context = LocalContext.current.applicationContext
+    val context = LocalContext.current.applicationContext
 
-  // Data Repositories
-  val settingsRepository = remember { SettingsRepository(context) }
-  val userRepository = remember { UserRepository(context) }
-  // `ViewModel` Synthesis
-  val vmFactory = remember { SimpleViewModelFactory(settingsRepository, userRepository) }
-  val vm: SimpleViewModel = viewModel(factory = vmFactory)
-  val vmSplash: SplashScreenViewModel = viewModel()
+    // Data Repositories
+    val settingsRepository = remember { SettingsRepository(context) }
+    val userRepository = remember { UserRepository(context) }
+    // `ViewModel` Synthesis
+    val vmFactory = remember { SimpleViewModelFactory(settingsRepository, userRepository) }
+    val vm: SimpleViewModel = viewModel(factory = vmFactory)
+    val vmSplash: SplashScreenViewModel = viewModel()
 
-  val settings by vm.settings.collectAsStateWithLifecycle()
-  val login by vm.login.collectAsStateWithLifecycle()
-  val loadingDone by vmSplash.loadingDone.collectAsStateWithLifecycle()
+    val settings by vm.settings.collectAsStateWithLifecycle()
+    val login by vm.login.collectAsStateWithLifecycle()
+    val loadingDone by vmSplash.loadingDone.collectAsStateWithLifecycle()
 
-  // Keep the splash on screen until the data store objects are ready.
-  if (!loadingDone) {
-    if (settings.valid && login.valid) vmSplash.setLoadingDone() else return
-  }
-
-  val navController = rememberNavController()
-  val startDestination = remember {
-    if (!settings.onboardingDone) {
-      NavDestination.ONBOARDING.route()
-    } else if (!login.loggedIn) {
-      NavDestination.LOGIN.route()
-    } else {
-      NavDestination.HOME.route()
+    // Keep the splash on screen until the data store objects are ready.
+    if (!loadingDone) {
+        if (settings.valid && login.valid) vmSplash.setLoadingDone() else return
     }
-  }
 
-  Surface(modifier = Modifier.fillMaxSize()) {
-    NavHost(
-        navController = navController,
-        startDestination = startDestination,
-        enterTransition = { fadeIn() + slideInHorizontally { it } },
-        exitTransition = { fadeOut() + slideOutHorizontally { -it } },
-        popEnterTransition = { fadeIn() + slideInHorizontally { -it } },
-        popExitTransition = { fadeOut() + slideOutHorizontally { it } },
-    ) {
-      navigation(
-          route = NavDestination.ONBOARDING.route(),
-          startDestination = NavDestination.ONBOARDING_LANDING.route(),
-      ) {
-        composable(NavDestination.ONBOARDING_LANDING.route()) { LandingPage(navController) }
-        composable(NavDestination.ONBOARDING_LICENSE.route()) { LicensePage(navController) }
-      }
-      navigation(
-          route = NavDestination.LOGIN.route(),
-          startDestination = NavDestination.LOGIN_DETAILS.route(),
-      ) {
-        composable(NavDestination.LOGIN_DETAILS.route()) { DetailsPage(navController) }
-      }
-      composable(NavDestination.HOME.route()) { HomeScaffold(navController) }
+    val navController = rememberNavController()
+    val startDestination = remember {
+        if (!settings.onboardingDone) {
+            NavDestination.ONBOARDING.route()
+        } else if (!login.loggedIn) {
+            NavDestination.LOGIN.route()
+        } else {
+            NavDestination.HOME.route()
+        }
     }
-  }
+
+    Surface(modifier = Modifier.fillMaxSize()) {
+        NavHost(
+            navController = navController,
+            startDestination = startDestination,
+            enterTransition = { fadeIn() + slideInHorizontally { it } },
+            exitTransition = { fadeOut() + slideOutHorizontally { -it } },
+            popEnterTransition = { fadeIn() + slideInHorizontally { -it } },
+            popExitTransition = { fadeOut() + slideOutHorizontally { it } },
+        ) {
+            navigation(
+                route = NavDestination.ONBOARDING.route(),
+                startDestination = NavDestination.ONBOARDING_LANDING.route(),
+            ) {
+                composable(NavDestination.ONBOARDING_LANDING.route()) { LandingPage(navController) }
+                composable(NavDestination.ONBOARDING_LICENSE.route()) { LicensePage(navController) }
+            }
+            navigation(
+                route = NavDestination.LOGIN.route(),
+                startDestination = NavDestination.LOGIN_DETAILS.route(),
+            ) {
+                composable(NavDestination.LOGIN_DETAILS.route()) { DetailsPage(navController) }
+            }
+            composable(NavDestination.HOME.route()) { HomeScaffold(navController) }
+        }
+    }
 }

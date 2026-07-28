@@ -29,49 +29,47 @@ import io.github.easeatten.ui.viewmodels.nav.HomeViewModelFactory
 
 @Composable
 fun HomeScaffold(navController: NavController) {
-  val context = LocalContext.current.applicationContext
+    val context = LocalContext.current.applicationContext
 
-  // Data Repositories
-  val settingsRepository = remember { SettingsRepository(context) }
-  val userRepository = remember { UserRepository(context) }
-  // `ViewModel` Synthesis
-  val vmFactory = remember { HomeViewModelFactory(settingsRepository, userRepository) }
-  val vm: HomeViewModel = viewModel(factory = vmFactory)
+    // Data Repositories
+    val settingsRepository = remember { SettingsRepository(context) }
+    val userRepository = remember { UserRepository(context) }
+    // `ViewModel` Synthesis
+    val vmFactory = remember { HomeViewModelFactory(settingsRepository, userRepository) }
+    val vm: HomeViewModel = viewModel(factory = vmFactory)
 
-  val state by vm.state.collectAsStateWithLifecycle()
-  val settings by vm.settings.collectAsStateWithLifecycle()
-  val login by vm.login.collectAsStateWithLifecycle()
-  val attendance by vm.attendance.collectAsStateWithLifecycle()
+    val state by vm.state.collectAsStateWithLifecycle()
+    val settings by vm.settings.collectAsStateWithLifecycle()
+    val login by vm.login.collectAsStateWithLifecycle()
+    val attendance by vm.attendance.collectAsStateWithLifecycle()
 
-  val homeNavController = rememberNavController()
+    val homeNavController = rememberNavController()
 
-  Scaffold(
-      bottomBar = { BottomBar(homeNavController, vm, state.navDestination) },
-  ) {
-    NavHost(
-        modifier = Modifier.fillMaxSize().padding(it),
-        navController = homeNavController,
-        startDestination = HomeState().navDestination.route(),
-        enterTransition = { fadeIn() },
-        exitTransition = { fadeOut() },
-        popEnterTransition = { fadeIn() },
-        popExitTransition = { fadeOut() },
-    ) {
-      HomeDestination.entries.forEach { destination ->
-        composable(destination.route()) {
-          destination.Composable(
-              navController,
-              homeNavController,
-              vm,
-              state,
-              settings,
-              login,
-              attendance,
-          )
+    Scaffold(bottomBar = { BottomBar(homeNavController, vm, state.navDestination) }) {
+        NavHost(
+            modifier = Modifier.fillMaxSize().padding(it),
+            navController = homeNavController,
+            startDestination = HomeState().navDestination.route(),
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() },
+            popEnterTransition = { fadeIn() },
+            popExitTransition = { fadeOut() },
+        ) {
+            HomeDestination.entries.forEach { destination ->
+                composable(destination.route()) {
+                    destination.Composable(
+                        navController,
+                        homeNavController,
+                        vm,
+                        state,
+                        settings,
+                        login,
+                        attendance,
+                    )
+                }
+            }
         }
-      }
     }
-  }
 }
 
 @Composable
@@ -80,24 +78,24 @@ internal fun BottomBar(
     vm: HomeViewModel,
     navDestination: HomeDestination,
 ) {
-  NavigationBar(windowInsets = NavigationBarDefaults.windowInsets) {
-    HomeDestination.entries.forEach { destination ->
-      NavigationBarItem(
-          selected = destination == navDestination,
-          onClick = {
-            if (destination != navDestination) {
-              vm.updateNavDestination(destination)
-              homeNavController.navigate(destination.route()) { popUpTo(0) }
-            }
-          },
-          icon = {
-            Icon(
-                imageVector = destination.icon(),
-                contentDescription = destination.description(),
+    NavigationBar(windowInsets = NavigationBarDefaults.windowInsets) {
+        HomeDestination.entries.forEach { destination ->
+            NavigationBarItem(
+                selected = destination == navDestination,
+                onClick = {
+                    if (destination != navDestination) {
+                        vm.updateNavDestination(destination)
+                        homeNavController.navigate(destination.route()) { popUpTo(0) }
+                    }
+                },
+                icon = {
+                    Icon(
+                        imageVector = destination.icon(),
+                        contentDescription = destination.description(),
+                    )
+                },
+                label = { Text(text = destination.description()) },
             )
-          },
-          label = { Text(text = destination.description()) },
-      )
+        }
     }
-  }
 }

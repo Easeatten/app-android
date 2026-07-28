@@ -43,51 +43,48 @@ import io.github.easeatten.ui.viewmodels.nav.OnboardingViewModelFactory
 
 @Composable
 fun LicensePage(navController: NavController) {
-  val context = LocalContext.current.applicationContext
+    val context = LocalContext.current.applicationContext
 
-  // Data Repositories
-  val settingsRepository = remember { SettingsRepository(context) }
-  // `ViewModel` Synthesis
-  val vmFactory = remember { OnboardingViewModelFactory(settingsRepository) }
-  val vm: OnboardingViewModel = viewModel(factory = vmFactory)
+    // Data Repositories
+    val settingsRepository = remember { SettingsRepository(context) }
+    // `ViewModel` Synthesis
+    val vmFactory = remember { OnboardingViewModelFactory(settingsRepository) }
+    val vm: OnboardingViewModel = viewModel(factory = vmFactory)
 
-  val state by vm.state.collectAsStateWithLifecycle()
-  val settings by vm.settings.collectAsStateWithLifecycle()
+    val state by vm.state.collectAsStateWithLifecycle()
+    val settings by vm.settings.collectAsStateWithLifecycle()
 
-  Scaffold(
-      topBar = { TopBar(navController) },
-      bottomBar = { BottomBar(navController, vm, state) },
-  ) {
-    Box(modifier = Modifier.fillMaxSize().padding(it)) {
-      Column(
-          modifier =
-              Modifier.fillMaxWidth()
-                  .padding(horizontal = 20.dp)
-                  .verticalScroll(rememberScrollState()),
-      ) {
-        Text(
-            modifier = Modifier.padding(vertical = 5.dp),
-            text = stringResource(R.string.license_text),
-        )
-      }
+    Scaffold(
+        topBar = { TopBar(navController) },
+        bottomBar = { BottomBar(navController, vm, state) },
+    ) {
+        Box(modifier = Modifier.fillMaxSize().padding(it)) {
+            Column(
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                        .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    modifier = Modifier.padding(vertical = 5.dp),
+                    text = stringResource(R.string.license_text),
+                )
+            }
+        }
     }
-  }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun TopBar(navController: NavController) {
-  TopAppBar(
-      title = { Text(text = "License Agreement") },
-      navigationIcon = {
-        IconButton(onClick = { navController.popBackStack() }) {
-          Icon(
-              imageVector = iconArrowBack,
-              contentDescription = "Back",
-          )
-        }
-      },
-  )
+    TopAppBar(
+        title = { Text(text = "License Agreement") },
+        navigationIcon = {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(imageVector = iconArrowBack, contentDescription = "Back")
+            }
+        },
+    )
 }
 
 @Composable
@@ -96,37 +93,32 @@ internal fun BottomBar(
     vm: OnboardingViewModel,
     state: OnboardingState,
 ) {
-  BottomAppBar {
-    Row(
-        modifier = Modifier.fillMaxSize().padding(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-      Row(
-          verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Checkbox(
-            checked = state.agreedToLicense,
-            onCheckedChange = { vm.updateAgreedToLicense(it) },
-        )
+    BottomAppBar {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = state.agreedToLicense,
+                    onCheckedChange = { vm.updateAgreedToLicense(it) },
+                )
 
-        Text(text = "I Agree")
-      }
+                Text(text = "I Agree")
+            }
 
-      Button(
-          modifier = Modifier.width(60.dp).height(60.dp),
-          contentPadding = PaddingValues(0.dp),
-          enabled = state.agreedToLicense,
-          onClick = {
-            vm.setOnboardingDone()
-            navController.navigate(NavDestination.LOGIN.route()) { popUpTo(0) }
-          },
-      ) {
-        Icon(
-            imageVector = iconArrowForward,
-            contentDescription = "Next",
-        )
-      }
+            Button(
+                modifier = Modifier.width(60.dp).height(60.dp),
+                contentPadding = PaddingValues(0.dp),
+                enabled = state.agreedToLicense,
+                onClick = {
+                    vm.setOnboardingDone()
+                    navController.navigate(NavDestination.LOGIN.route()) { popUpTo(0) }
+                },
+            ) {
+                Icon(imageVector = iconArrowForward, contentDescription = "Next")
+            }
+        }
     }
-  }
 }

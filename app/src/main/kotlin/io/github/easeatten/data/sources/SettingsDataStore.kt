@@ -34,21 +34,21 @@ data class SettingsData(
 )
 
 object SettingsSerializer : Serializer<SettingsData> {
-  override val defaultValue = SettingsData(valid = true)
+    override val defaultValue = SettingsData(valid = true)
 
-  override suspend fun readFrom(input: InputStream): SettingsData {
-    try {
-      return Json.decodeFromString<SettingsData>(input.readBytes().decodeToString())
-    } catch (serialization: SerializationException) {
-      throw CorruptionException("corrupted settings data:", serialization)
+    override suspend fun readFrom(input: InputStream): SettingsData {
+        try {
+            return Json.decodeFromString<SettingsData>(input.readBytes().decodeToString())
+        } catch (serialization: SerializationException) {
+            throw CorruptionException("corrupted settings data:", serialization)
+        }
     }
-  }
 
-  override suspend fun writeTo(t: SettingsData, output: OutputStream) {
-    withContext(Dispatchers.IO) {
-      output.write(Json.encodeToString(t.copy(valid = true)).encodeToByteArray())
+    override suspend fun writeTo(t: SettingsData, output: OutputStream) {
+        withContext(Dispatchers.IO) {
+            output.write(Json.encodeToString(t.copy(valid = true)).encodeToByteArray())
+        }
     }
-  }
 }
 
 val Context.SettingsDataStore: DataStore<SettingsData> by

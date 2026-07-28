@@ -22,25 +22,19 @@ import io.github.easeatten.ui.nav.NavDestination
 
 @Composable
 fun LandingPage(navController: NavController) {
-  Column(
-      modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
-      horizontalAlignment = Alignment.CenterHorizontally,
-      verticalArrangement = Arrangement.SpaceEvenly,
-  ) {
-    Text(
-        text = "Welcome to easeatten.",
-        style = MaterialTheme.typography.displayLarge,
-    )
-
-    Button(
-        onClick = { navController.navigate(NavDestination.ONBOARDING_LICENSE.route()) },
-        modifier = Modifier.width(60.dp).height(60.dp),
-        contentPadding = PaddingValues(0.dp),
+    Column(
+        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceEvenly,
     ) {
-      Icon(
-          imageVector = iconArrowForward,
-          contentDescription = "Next",
-      )
+        Text(text = "Welcome to easeatten.", style = MaterialTheme.typography.displayLarge)
+
+        Button(
+            onClick = { navController.navigate(NavDestination.ONBOARDING_LICENSE.route()) },
+            modifier = Modifier.width(60.dp).height(60.dp),
+            contentPadding = PaddingValues(0.dp),
+        ) {
+            Icon(imageVector = iconArrowForward, contentDescription = "Next")
+        }
     }
-  }
 }

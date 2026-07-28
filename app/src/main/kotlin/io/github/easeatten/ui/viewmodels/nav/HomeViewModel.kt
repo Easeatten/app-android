@@ -18,76 +18,74 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class HomeState(
-    val navDestination: HomeDestination = HomeDestination.DASHBOARD,
-)
+data class HomeState(val navDestination: HomeDestination = HomeDestination.DASHBOARD)
 
 class HomeViewModel(
     private val settingsRepository: SettingsRepository,
     private val userRepository: UserRepository,
 ) : ViewModel() {
-  private val statePrivate = MutableStateFlow(HomeState())
-  val state = statePrivate.asStateFlow()
+    private val statePrivate = MutableStateFlow(HomeState())
+    val state = statePrivate.asStateFlow()
 
-  val settings =
-      settingsRepository.settingsFlow.stateIn(
-          scope = viewModelScope,
-          started = SharingStarted.Eagerly,
-          initialValue = SettingsData(),
-      )
+    val settings =
+        settingsRepository.settingsFlow.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = SettingsData(),
+        )
 
-  val login =
-      userRepository.loginFlow.stateIn(
-          scope = viewModelScope,
-          started = SharingStarted.Eagerly,
-          initialValue = LoginData(),
-      )
+    val login =
+        userRepository.loginFlow.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = LoginData(),
+        )
 
-  val attendance =
-      userRepository.attendanceFlow.stateIn(
-          scope = viewModelScope,
-          started = SharingStarted.WhileSubscribed(),
-          initialValue = AttendanceData(),
-      )
+    val attendance =
+        userRepository.attendanceFlow.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = AttendanceData(),
+        )
 
-  fun updateNavDestination(destination: HomeDestination) {
-    statePrivate.update { it.copy(navDestination = destination) }
-  }
+    fun updateNavDestination(destination: HomeDestination) {
+        statePrivate.update { it.copy(navDestination = destination) }
+    }
 
-  fun updateColorScheme(colorScheme: ColorScheme) {
-    viewModelScope.launch { settingsRepository.updateThemeColorScheme(colorScheme) }
-  }
+    fun updateColorScheme(colorScheme: ColorScheme) {
+        viewModelScope.launch { settingsRepository.updateThemeColorScheme(colorScheme) }
+    }
 
-  fun updateDarkMode(choice: Boolean?) {
-    viewModelScope.launch { settingsRepository.updateThemeDarkMode(choice) }
-  }
+    fun updateDarkMode(choice: Boolean?) {
+        viewModelScope.launch { settingsRepository.updateThemeDarkMode(choice) }
+    }
 
-  fun updateDynamicColor(enable: Boolean) {
-    viewModelScope.launch { settingsRepository.updateThemeDynamicColor(enable) }
-  }
+    fun updateDynamicColor(enable: Boolean) {
+        viewModelScope.launch { settingsRepository.updateThemeDynamicColor(enable) }
+    }
 
-  fun updateTypography(typography: Typography) {
-    viewModelScope.launch { settingsRepository.updateThemeTypography(typography) }
-  }
+    fun updateTypography(typography: Typography) {
+        viewModelScope.launch { settingsRepository.updateThemeTypography(typography) }
+    }
 
-  fun logout() {
-    viewModelScope.launch { userRepository.unregisterUser() }
-  }
+    fun logout() {
+        viewModelScope.launch { userRepository.unregisterUser() }
+    }
 }
 
 class HomeViewModelFactory(
     private val settingsRepository: SettingsRepository,
     private val userRepository: UserRepository,
 ) : ViewModelProvider.Factory {
-  @Suppress("UNCHECKED_CAST")
-  override fun <T : ViewModel> create(modelClass: Class<T>): T =
-      when {
-        modelClass.isAssignableFrom(HomeViewModel::class.java) -> {
-          HomeViewModel(settingsRepository, userRepository) as T
-        }
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T =
+        when {
+            modelClass.isAssignableFrom(HomeViewModel::class.java) -> {
+                HomeViewModel(settingsRepository, userRepository) as T
+            }
 
-        else -> {
-          throw IllegalArgumentException("Unknown ViewModel class $modelClass")
+            else -> {
+                throw IllegalArgumentException("Unknown ViewModel class $modelClass")
+            }
         }
-      }
 }

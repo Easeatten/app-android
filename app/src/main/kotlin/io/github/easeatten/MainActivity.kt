@@ -15,17 +15,17 @@ import io.github.easeatten.ui.widgets.AttendanceGlance
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-  private val vm: SplashScreenViewModel by viewModels()
+    private val vm: SplashScreenViewModel by viewModels()
 
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-    val splashScreen = installSplashScreen()
-    splashScreen.setKeepOnScreenCondition { !vm.loadingDone.value }
+        val splashScreen = installSplashScreen()
+        splashScreen.setKeepOnScreenCondition { !vm.loadingDone.value }
 
-    lifecycleScope.launch { AttendanceGlance().updateAll(this@MainActivity) }
+        lifecycleScope.launch { AttendanceGlance().updateAll(this@MainActivity) }
 
-    enableEdgeToEdge()
-    setContent { ThemeManager { NavManager() } }
-  }
+        enableEdgeToEdge()
+        setContent { ThemeManager { NavManager() } }
+    }
 }

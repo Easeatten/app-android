@@ -1,0 +1,13 @@
+- id: gradle-check
+  name: gradle-check
+  description: Runs gradle check procedures.
+  language: unsupported_script
+  entry: gradlew --no-daemon check
+  pass_filenames: false
+
+- id: gradle-ktfmt
+  name: gradle-ktfmt
+  description: Runs ktfmt on Kotlin source and script files.
+  language: unsupported_script
+  entry: gradlew --no-daemon ktfmtPreCommit
+  pass_filenames: false

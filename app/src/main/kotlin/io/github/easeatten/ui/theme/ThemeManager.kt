@@ -25,58 +25,58 @@ import io.github.easeatten.ui.viewmodels.SimpleViewModelFactory
 
 @Composable
 fun ThemeManager(content: @Composable () -> Unit) {
-  val context = LocalContext.current.applicationContext
-  val window = LocalActivity.current!!.window
+    val context = LocalContext.current.applicationContext
+    val window = LocalActivity.current!!.window
 
-  // Data Repositories
-  val settingsRepository = remember { SettingsRepository(context) }
-  val userRepository = remember { UserRepository(context) }
-  // `ViewModel` Synthesis
-  val vmFactory = remember { SimpleViewModelFactory(settingsRepository, userRepository) }
-  val vm: SimpleViewModel = viewModel(factory = vmFactory)
+    // Data Repositories
+    val settingsRepository = remember { SettingsRepository(context) }
+    val userRepository = remember { UserRepository(context) }
+    // `ViewModel` Synthesis
+    val vmFactory = remember { SimpleViewModelFactory(settingsRepository, userRepository) }
+    val vm: SimpleViewModel = viewModel(factory = vmFactory)
 
-  val settings by vm.settings.collectAsStateWithLifecycle()
+    val settings by vm.settings.collectAsStateWithLifecycle()
 
-  val darkMode = settings.themeDarkMode ?: isSystemInDarkTheme()
+    val darkMode = settings.themeDarkMode ?: isSystemInDarkTheme()
 
-  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-    window.isNavigationBarContrastEnforced = false
-  }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        window.isNavigationBarContrastEnforced = false
+    }
 
-  val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
-  windowInsetsController.isAppearanceLightStatusBars = !darkMode
-  windowInsetsController.isAppearanceLightNavigationBars = !darkMode
+    val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
+    windowInsetsController.isAppearanceLightStatusBars = !darkMode
+    windowInsetsController.isAppearanceLightNavigationBars = !darkMode
 
-  MaterialTheme(
-      colorScheme =
-          when {
-            isDynamicColorSupported && settings.themeDynamicColor -> {
-              val ctx = LocalContext.current
-              if (darkMode) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
-            }
+    MaterialTheme(
+        colorScheme =
+            when {
+                isDynamicColorSupported && settings.themeDynamicColor -> {
+                    val ctx = LocalContext.current
+                    if (darkMode) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
+                }
 
-            else -> {
-              settings.themeColorScheme.get().getColorScheme(darkMode)
-            }
-          },
-      typography = settings.themeTypography.get().typography,
-      content = content,
-  )
+                else -> {
+                    settings.themeColorScheme.get().getColorScheme(darkMode)
+                }
+            },
+        typography = settings.themeTypography.get().typography,
+        content = content,
+    )
 }
 
 @GlanceComposable
 @Composable
 fun GlanceThemeManager(settings: SettingsData, content: @GlanceComposable @Composable () -> Unit) {
-  GlanceTheme(
-      colors =
-          when {
-            isDynamicColorSupported -> GlanceTheme.colors
-            else ->
-                ColorProviders(
-                    light = settings.themeColorScheme.get().getColorScheme(false),
-                    dark = settings.themeColorScheme.get().getColorScheme(true),
-                )
-          },
-      content = content,
-  )
+    GlanceTheme(
+        colors =
+            when {
+                isDynamicColorSupported -> GlanceTheme.colors
+                else ->
+                    ColorProviders(
+                        light = settings.themeColorScheme.get().getColorScheme(false),
+                        dark = settings.themeColorScheme.get().getColorScheme(true),
+                    )
+            },
+        content = content,
+    )
 }
