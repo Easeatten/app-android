@@ -31,6 +31,7 @@ dependencies {
 
 plugins {
   alias(libs.plugins.android.application)
+  alias(libs.plugins.detekt)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.kotlin.serialization)
 }
@@ -112,4 +113,10 @@ android.defaultConfig.ndk.abiFilters.forEach { abi ->
   }
 
   tasks.named("rustSxcapiUniFfi") { dependsOn(rustSxcapiBuildTask) }
+}
+
+tasks.withType<dev.detekt.gradle.Detekt>().configureEach { exclude("**/generated/**") }
+
+tasks.withType<dev.detekt.gradle.DetektCreateBaselineTask>().configureEach {
+  exclude("**/generated/**")
 }
