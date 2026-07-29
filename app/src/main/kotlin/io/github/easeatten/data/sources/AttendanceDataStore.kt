@@ -27,19 +27,19 @@ data class AttendanceRecord(
     val delivered: UInt = 0u,
     val professors: List<String>,
 ) {
-  fun getPercentage(): Float {
-    if (this.delivered == 0u) return 1.0f
-    return this.attended.toFloat() / this.delivered.toFloat()
-  }
+    fun getPercentage(): Float {
+        if (this.delivered == 0u) return 1.0f
+        return this.attended.toFloat() / this.delivered.toFloat()
+    }
 
-  fun getScore(target: Float): Int {
-    return if (this.getPercentage() >= target) {
-          floor((this.attended.toInt() - target * this.delivered.toInt()) / target)
-        } else {
-          -ceil((target * this.delivered.toInt() - attended.toInt()) / (1.0f - target))
-        }
-        .toInt()
-  }
+    fun getScore(target: Float): Int {
+        return if (this.getPercentage() >= target) {
+                floor((this.attended.toInt() - target * this.delivered.toInt()) / target)
+            } else {
+                -ceil((target * this.delivered.toInt() - attended.toInt()) / (1.0f - target))
+            }
+            .toInt()
+    }
 }
 
 @Serializable
@@ -51,20 +51,21 @@ data class AttendanceData(
     val lastUpdatedDay: UInt = 0u,
     val records: List<AttendanceRecord> = listOf(),
 ) {
-  fun getLastUpdatedDate(): Date =
-      Calendar.Builder()
-          .setDate(
-              this.lastUpdatedYear.toInt(),
-              this.lastUpdatedMonth.toInt(),
-              this.lastUpdatedDay.toInt(),
-          )
-          .build()
-          .time
+    fun getLastUpdatedDate(): Date =
+        Calendar.Builder()
+            .setDate(
+                this.lastUpdatedYear.toInt(),
+                this.lastUpdatedMonth.toInt(),
+                this.lastUpdatedDay.toInt(),
+            )
+            .build()
+            .time
 
-  fun getAggregatePercentage(): Float {
-    if (this.records.isEmpty()) return 1.0f
-    return records.fold(0.0f) { acc, record -> acc + record.getPercentage() } / this.records.size
-  }
+    fun getAggregatePercentage(): Float {
+        if (this.records.isEmpty()) return 1.0f
+        return records.fold(0.0f) { acc, record -> acc + record.getPercentage() } /
+            this.records.size
+    }
 }
 
 fun SxcapiAttendanceData.toAttendanceData(): AttendanceData =
@@ -76,32 +77,32 @@ fun SxcapiAttendanceData.toAttendanceData(): AttendanceData =
         lastUpdatedDay = this.lastUpdatedDay,
         records =
             this.subjects.map {
-              AttendanceRecord(
-                  subject = it.name ?: it.code ?: "Unknown",
-                  subjectPractical = it.code?.endsWith("P") ?: false,
-                  attended = it.records.sumOf { record -> record.attended },
-                  delivered = it.records.sumOf { record -> record.delivered },
-                  professors = it.records.mapNotNull { record -> record.professor },
-              )
+                AttendanceRecord(
+                    subject = it.name ?: it.code ?: "Unknown",
+                    subjectPractical = it.code?.endsWith("P") ?: false,
+                    attended = it.records.sumOf { record -> record.attended },
+                    delivered = it.records.sumOf { record -> record.delivered },
+                    professors = it.records.mapNotNull { record -> record.professor },
+                )
             },
     )
 
 object AttendanceSerializer : Serializer<AttendanceData> {
-  override val defaultValue = AttendanceData()
+    override val defaultValue = AttendanceData()
 
-  override suspend fun readFrom(input: InputStream): AttendanceData {
-    try {
-      return Json.decodeFromString<AttendanceData>(input.readBytes().decodeToString())
-    } catch (serialization: SerializationException) {
-      throw CorruptionException("corrupted attendance data:", serialization)
+    override suspend fun readFrom(input: InputStream): AttendanceData {
+        try {
+            return Json.decodeFromString<AttendanceData>(input.readBytes().decodeToString())
+        } catch (serialization: SerializationException) {
+            throw CorruptionException("corrupted attendance data:", serialization)
+        }
     }
-  }
 
-  override suspend fun writeTo(t: AttendanceData, output: OutputStream) {
-    withContext(Dispatchers.IO) {
-      output.write(Json.encodeToString(t.copy(valid = true)).encodeToByteArray())
+    override suspend fun writeTo(t: AttendanceData, output: OutputStream) {
+        withContext(Dispatchers.IO) {
+            output.write(Json.encodeToString(t.copy(valid = true)).encodeToByteArray())
+        }
     }
-  }
 }
 
 val Context.AttendanceDataStore: DataStore<AttendanceData> by

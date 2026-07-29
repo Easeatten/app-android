@@ -25,21 +25,21 @@ data class LoginData(
 )
 
 object LoginSerializer : Serializer<LoginData> {
-  override val defaultValue = LoginData(valid = true)
+    override val defaultValue = LoginData(valid = true)
 
-  override suspend fun readFrom(input: InputStream): LoginData {
-    try {
-      return Json.decodeFromString<LoginData>(input.readBytes().decodeToString())
-    } catch (serialization: SerializationException) {
-      throw CorruptionException("corrupted login data:", serialization)
+    override suspend fun readFrom(input: InputStream): LoginData {
+        try {
+            return Json.decodeFromString<LoginData>(input.readBytes().decodeToString())
+        } catch (serialization: SerializationException) {
+            throw CorruptionException("corrupted login data:", serialization)
+        }
     }
-  }
 
-  override suspend fun writeTo(t: LoginData, output: OutputStream) {
-    withContext(Dispatchers.IO) {
-      output.write(Json.encodeToString(t.copy(valid = true)).encodeToByteArray())
+    override suspend fun writeTo(t: LoginData, output: OutputStream) {
+        withContext(Dispatchers.IO) {
+            output.write(Json.encodeToString(t.copy(valid = true)).encodeToByteArray())
+        }
     }
-  }
 }
 
 val Context.LoginDataStore: DataStore<LoginData> by

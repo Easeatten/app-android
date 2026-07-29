@@ -43,6 +43,7 @@ import io.github.easeatten.ui.viewmodels.nav.HomeState
 import io.github.easeatten.ui.viewmodels.nav.HomeViewModel
 
 @Composable
+@Suppress("UnusedParameter") // Parameters are as per Composable in [`HomeDestination`]
 fun HomePageSettings(
     navController: NavController,
     homeNavController: NavController,
@@ -52,93 +53,46 @@ fun HomePageSettings(
     login: LoginData,
     attendance: AttendanceData,
 ) {
-  Column(modifier = Modifier.fillMaxSize()) {
-    Text(
-        modifier = Modifier.padding(20.dp),
-        text = "Settings",
-        style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
-    )
-
-    LazyColumn {
-      item {
+    Column(modifier = Modifier.fillMaxSize()) {
         Text(
-            modifier = Modifier.padding(horizontal = 20.dp),
-            text = "Appearance",
-            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(20.dp),
+            text = "Settings",
+            style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
         )
-      }
 
-      item {
-        SettingsOption(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp),
-            text = "Color Scheme",
-            disabledSubtext = "Overridden by Dynamic Colors",
-            iterable = ColorScheme.entries,
-            labelMap = { it.get().name },
-            enabled = !settings.themeDynamicColor,
-            selected = settings.themeColorScheme,
-        ) {
-          vm.updateColorScheme(it)
-        }
-      }
+        LazyColumn {
+            item {
+                Text(
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    text = "Appearance",
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
 
-      item {
-        SettingsOption(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp),
-            text = "Dark Mode",
-            iterable = listOf(null, false, true),
-            labelMap = {
-              if (it == true) {
-                "Enabled"
-              } else if (it == false) {
-                "Disabled"
-              } else {
-                "Follows System"
-              }
-            },
-            selected = settings.themeDarkMode,
-        ) {
-          vm.updateDarkMode(it)
-        }
-      }
+            val modifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp)
 
-      if (isDynamicColorSupported) {
-        item {
-          SettingsSwitch(
-              modifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp),
-              text = "Dynamic Colors",
-              subtext = "Colors by Material You",
-              checked = settings.themeDynamicColor,
-          ) {
-            vm.updateDynamicColor(!settings.themeDynamicColor)
-          }
-        }
-      }
+            item { ColorSchemeSettingsOption(vm, settings, modifier) }
 
-      item {
-        SettingsOption(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp),
-            text = "Typography",
-            iterable = Typography.entries,
-            labelMap = { it.get().name },
-            selected = settings.themeTypography,
-        ) {
-          vm.updateTypography(it)
-        }
-      }
+            item { DarkModeSettingsOption(vm, settings, modifier) }
 
-      item {
-        SettingsDangerButton(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp),
-            text = "Logout",
-            confirmText = "Are you sure you want to logout?",
-        ) {
-          vm.logout()
-          navController.navigate(NavDestination.LOGIN.route()) { popUpTo(0) }
+            if (isDynamicColorSupported) {
+                item { DynamicColorSettingsSwitch(vm, settings, modifier) }
+            }
+
+            item { TypographySettingsOption(vm, settings, modifier) }
+
+            item {
+                SettingsDangerButton(
+                    modifier = modifier,
+                    text = "Logout",
+                    confirmText = "Are you sure you want to logout?",
+                ) {
+                    vm.logout()
+                    navController.navigate(NavDestination.LOGIN.route()) { popUpTo(0) }
+                }
+            }
         }
-      }
     }
-  }
 }
 
 @Composable
@@ -150,19 +104,21 @@ internal fun SettingsSwitch(
     checked: Boolean,
     onCheckedToggle: () -> Unit,
 ) {
-  Box(modifier = Modifier.clickable { onCheckedToggle() }) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-      Column(modifier = modifier.weight(1f)) {
-        Text(text = text, style = MaterialTheme.typography.titleLarge)
-        Text(text = subtext, style = MaterialTheme.typography.bodyMedium)
-      }
+    Box(modifier = Modifier.clickable { onCheckedToggle() }) {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = modifier.weight(1f)) {
+                Text(text = text, style = MaterialTheme.typography.titleLarge)
+                Text(text = subtext, style = MaterialTheme.typography.bodyMedium)
+            }
 
-      Switch(modifier = modifier, enabled = enabled, checked = checked, onCheckedChange = null)
+            Switch(
+                modifier = modifier,
+                enabled = enabled,
+                checked = checked,
+                onCheckedChange = null,
+            )
+        }
     }
-  }
 }
 
 @Composable
@@ -176,68 +132,70 @@ internal fun <T> SettingsOption(
     selected: T,
     onSelectedChange: (T) -> Unit,
 ) {
-  var dialog by remember { mutableStateOf(false) }
+    var dialog by remember { mutableStateOf(false) }
 
-  Box(modifier = Modifier.clickable { if (enabled) dialog = true }) {
-    Box(modifier = modifier) {
-      Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = text, style = MaterialTheme.typography.titleLarge)
+    Box(modifier = Modifier.clickable { if (enabled) dialog = true }) {
+        val subtext =
+            if (enabled || disabledSubtext == null) labelMap(selected) else disabledSubtext
 
-        Text(
-            text = if (enabled || disabledSubtext == null) labelMap(selected) else disabledSubtext,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-      }
-    }
-  }
-
-  if (!enabled || !dialog) return
-
-  Dialog(onDismissRequest = { dialog = false }) {
-    Card {
-      Column {
-        Text(
-            modifier = Modifier.padding(20.dp),
-            text = text,
-            style = MaterialTheme.typography.titleLarge,
-        )
-
-        LazyColumn(modifier = Modifier.selectableGroup()) {
-          iterable.forEach { elem ->
-            item {
-              Box(
-                  modifier =
-                      Modifier.fillMaxWidth()
-                          .selectable(
-                              role = Role.RadioButton,
-                              selected = (selected == elem),
-                              onClick = {
-                                onSelectedChange(elem)
-                                dialog = false
-                              },
-                          ),
-              ) {
-                Row(
-                    modifier = Modifier.padding(10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                  RadioButton(
-                      modifier = Modifier.padding(horizontal = 10.dp),
-                      selected = (selected == elem),
-                      onClick = null,
-                  )
-
-                  Text(modifier = Modifier.padding(horizontal = 10.dp), text = labelMap(elem))
-                }
-              }
+        Box(modifier = modifier) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(text = text, style = MaterialTheme.typography.titleLarge)
+                Text(text = subtext, style = MaterialTheme.typography.bodyMedium)
             }
-          }
         }
-
-        Spacer(modifier = Modifier.padding(vertical = 10.dp))
-      }
     }
-  }
+
+    if (!enabled || !dialog) return
+
+    Dialog(onDismissRequest = { dialog = false }) {
+        Card {
+            Column {
+                Text(
+                    modifier = Modifier.padding(20.dp),
+                    text = text,
+                    style = MaterialTheme.typography.titleLarge,
+                )
+
+                LazyColumn(modifier = Modifier.selectableGroup()) {
+                    iterable.forEach { elem ->
+                        item {
+                            Box(
+                                modifier =
+                                    Modifier.fillMaxWidth()
+                                        .selectable(
+                                            role = Role.RadioButton,
+                                            selected = (selected == elem),
+                                            onClick = {
+                                                onSelectedChange(elem)
+                                                dialog = false
+                                            },
+                                        )
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    RadioButton(
+                                        modifier = Modifier.padding(horizontal = 10.dp),
+                                        selected = (selected == elem),
+                                        onClick = null,
+                                    )
+
+                                    Text(
+                                        modifier = Modifier.padding(horizontal = 10.dp),
+                                        text = labelMap(elem),
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.padding(vertical = 10.dp))
+            }
+        }
+    }
 }
 
 @Composable
@@ -248,54 +206,126 @@ internal fun SettingsDangerButton(
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-  var dialog by remember { mutableStateOf(false) }
+    var dialog by remember { mutableStateOf(false) }
 
-  Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-    Button(
-        colors =
-            ButtonDefaults.buttonColors()
-                .copy(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError,
-                ),
-        onClick = { dialog = true },
-    ) {
-      Text(text = text)
-    }
-  }
-
-  if (!enabled || !dialog) return
-
-  Dialog(onDismissRequest = { dialog = false }) {
-    Card {
-      Column(
-          modifier = Modifier.fillMaxWidth().padding(20.dp),
-          verticalArrangement = Arrangement.spacedBy(20.dp),
-      ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.titleLarge,
-        )
-
-        Text(text = confirmText)
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Button(
+            colors =
+                ButtonDefaults.buttonColors()
+                    .copy(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+            onClick = { dialog = true },
         ) {
-          TextButton(
-              onClick = {
-                dialog = false
-                onClick()
-              }) {
-                Text(text = "Yes")
-              }
-
-          Spacer(modifier = Modifier.padding(horizontal = 5.dp))
-
-          TextButton(onClick = { dialog = false }) { Text(text = "No") }
+            Text(text = text)
         }
-      }
     }
-  }
+
+    if (!enabled || !dialog) return
+
+    Dialog(onDismissRequest = { dialog = false }) {
+        Card {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                Text(text = text, style = MaterialTheme.typography.titleLarge)
+
+                Text(text = confirmText)
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(
+                        onClick = {
+                            dialog = false
+                            onClick()
+                        }
+                    ) {
+                        Text(text = "Yes")
+                    }
+
+                    Spacer(modifier = Modifier.padding(horizontal = 5.dp))
+
+                    TextButton(onClick = { dialog = false }) { Text(text = "No") }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun DynamicColorSettingsSwitch(
+    vm: HomeViewModel,
+    settings: SettingsData,
+    modifier: Modifier = Modifier,
+) {
+    SettingsSwitch(
+        modifier = modifier,
+        text = "Dynamic Colors",
+        subtext = "Colors by Material You",
+        checked = settings.themeDynamicColor,
+    ) {
+        vm.updateDynamicColor(!settings.themeDynamicColor)
+    }
+}
+
+@Composable
+internal fun ColorSchemeSettingsOption(
+    vm: HomeViewModel,
+    settings: SettingsData,
+    modifier: Modifier = Modifier,
+) {
+    SettingsOption(
+        modifier = modifier,
+        text = "Color Scheme",
+        disabledSubtext = "Overridden by Dynamic Colors",
+        iterable = ColorScheme.entries,
+        labelMap = { it.get().name },
+        enabled = !settings.themeDynamicColor,
+        selected = settings.themeColorScheme,
+    ) {
+        vm.updateColorScheme(it)
+    }
+}
+
+@Composable
+internal fun DarkModeSettingsOption(
+    vm: HomeViewModel,
+    settings: SettingsData,
+    modifier: Modifier = Modifier,
+) {
+    SettingsOption(
+        modifier = modifier,
+        text = "Dark Mode",
+        iterable = listOf(null, false, true),
+        labelMap = {
+            if (it == true) {
+                "Enabled"
+            } else if (it == false) {
+                "Disabled"
+            } else {
+                "Follows System"
+            }
+        },
+        selected = settings.themeDarkMode,
+    ) {
+        vm.updateDarkMode(it)
+    }
+}
+
+@Composable
+internal fun TypographySettingsOption(
+    vm: HomeViewModel,
+    settings: SettingsData,
+    modifier: Modifier = Modifier,
+) {
+    SettingsOption(
+        modifier = modifier,
+        text = "Typography",
+        iterable = Typography.entries,
+        labelMap = { it.get().name },
+        selected = settings.themeTypography,
+    ) {
+        vm.updateTypography(it)
+    }
 }

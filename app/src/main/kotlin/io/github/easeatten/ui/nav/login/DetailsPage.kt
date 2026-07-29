@@ -46,132 +46,162 @@ import io.github.easeatten.ui.viewmodels.nav.LoginViewModelFactory
 
 @Composable
 fun DetailsPage(navController: NavController) {
-  val context = LocalContext.current.applicationContext
+    val context = LocalContext.current.applicationContext
 
-  // Data Repositories
-  val userRepository = remember { UserRepository(context) }
-  // `ViewModel` Synthesis
-  val vmFactory = remember { LoginViewModelFactory(userRepository) }
-  val vm: LoginViewModel = viewModel(factory = vmFactory)
+    // Data Repositories
+    val userRepository = remember { UserRepository(context) }
+    // `ViewModel` Synthesis
+    val vmFactory = remember { LoginViewModelFactory(userRepository) }
+    val vm: LoginViewModel = viewModel(factory = vmFactory)
 
-  val state by vm.state.collectAsStateWithLifecycle()
-  val login by vm.login.collectAsStateWithLifecycle()
+    val state by vm.state.collectAsStateWithLifecycle()
+    val login by vm.login.collectAsStateWithLifecycle()
 
-  Box(modifier = Modifier.fillMaxSize().padding(20.dp)) {
-    val snackbarHostState = remember { SnackbarHostState() }
+    Box(modifier = Modifier.fillMaxSize().padding(20.dp)) {
+        val snackbarHostState = remember { SnackbarHostState() }
 
-    Scaffold(
-        bottomBar = { BottomBar(navController, vm, state) },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-    ) {
-      Box(modifier = Modifier.fillMaxSize().padding(it)) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(20.dp).verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+        Scaffold(
+            bottomBar = { BottomBar(vm, state) },
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         ) {
-          Text(
-              text = "Let's get you started",
-              style = MaterialTheme.typography.displayLarge,
-          )
+            Box(modifier = Modifier.fillMaxSize().padding(it)) {
+                Column(
+                    modifier =
+                        Modifier.fillMaxSize().padding(20.dp).verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        text = "Let's get you started",
+                        style = MaterialTheme.typography.displayLarge,
+                    )
 
-          // Departmental Code
-          OutlinedTextField(
-              modifier = Modifier.fillMaxWidth().padding(5.dp),
-              label = { Text("Departmental Code") },
-              value = state.department,
-              singleLine = true,
-              onValueChange = { value -> vm.updateDepartment(value) },
-              isError = state.isDepartmentInvalid == true,
-          )
+                    val modifier = Modifier.fillMaxWidth().padding(5.dp)
 
-          // Roll Number
-          OutlinedTextField(
-              modifier = Modifier.fillMaxWidth().padding(5.dp),
-              label = { Text("Roll Number") },
-              value = state.roll,
-              singleLine = true,
-              onValueChange = { value -> vm.updateRoll(value) },
-              isError = state.isRollInvalid == true,
-              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-          )
+                    DepartmentCodeTextField(vm, state, modifier)
+                    RollNumberTextField(vm, state, modifier)
 
-          Row(modifier = Modifier.fillMaxWidth()) {
-            // Batch Year
-            OutlinedTextField(
-                modifier = Modifier.weight(1f).padding(5.dp),
-                label = { Text("Batch Year") },
-                value = state.year,
-                singleLine = true,
-                onValueChange = { value -> vm.updateYear(value) },
-                isError = state.isYearInvalid == true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            )
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        val modifier = Modifier.weight(1f).padding(5.dp)
 
-            // Semester
-            OutlinedTextField(
-                modifier = Modifier.weight(1f).padding(5.dp),
-                label = { Text("Semester") },
-                value = state.semester,
-                singleLine = true,
-                onValueChange = { value -> vm.updateSemester(value) },
-                isError = state.isSemesterInvalid == true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            )
-          }
+                        BatchYearTextField(vm, state, modifier)
+                        SemesterTextField(vm, state, modifier)
+                    }
+                }
+            }
         }
-      }
-    }
 
-    when {
-      state.isLoginInProgress -> {
-        Dialog(onDismissRequest = {}) { CircularProgressIndicator(modifier = Modifier.size(35.dp)) }
-      }
+        when {
+            state.isLoginInProgress -> {
+                Dialog(onDismissRequest = {}) {
+                    CircularProgressIndicator(modifier = Modifier.size(35.dp))
+                }
+            }
 
-      !state.isLoginInProgress && state.loginFailed == false -> {
-        vm.clearLoginState()
-        navController.navigate(NavDestination.HOME.route()) { popUpTo(0) }
-      }
+            !state.isLoginInProgress && state.loginFailed == false -> {
+                vm.clearLoginState()
+                navController.navigate(NavDestination.HOME.route()) { popUpTo(0) }
+            }
 
-      !state.isLoginInProgress && state.loginFailed == true -> {
-        LaunchedEffect(state.loginErrorMessage) {
-          if (state.loginErrorMessage != null) {
-            snackbarHostState.showSnackbar(state.loginErrorMessage!!)
-            vm.clearLoginState()
-          }
+            !state.isLoginInProgress && state.loginFailed == true -> {
+                LaunchedEffect(state.loginErrorMessage) {
+                    if (state.loginErrorMessage != null) {
+                        snackbarHostState.showSnackbar(state.loginErrorMessage!!)
+                        vm.clearLoginState()
+                    }
+                }
+            }
         }
-      }
     }
-  }
 }
 
 @Composable
-internal fun BottomBar(
-    navController: NavController,
+internal fun BottomBar(vm: LoginViewModel, state: LoginState) {
+    BottomAppBar(containerColor = MaterialTheme.colorScheme.surface) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Button(
+                modifier = Modifier.width(60.dp).height(60.dp),
+                contentPadding = PaddingValues(0.dp),
+                enabled =
+                    state.isDepartmentInvalid == false &&
+                        state.isRollInvalid == false &&
+                        state.isYearInvalid == false &&
+                        state.isSemesterInvalid == false,
+                onClick = { vm.attemptLogin() },
+            ) {
+                Icon(imageVector = iconArrowForward, contentDescription = "Login")
+            }
+        }
+    }
+}
+
+@Composable
+internal fun DepartmentCodeTextField(
     vm: LoginViewModel,
     state: LoginState,
+    modifier: Modifier = Modifier,
 ) {
-  BottomAppBar(containerColor = MaterialTheme.colorScheme.surface) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-    ) {
-      Button(
-          modifier = Modifier.width(60.dp).height(60.dp),
-          contentPadding = PaddingValues(0.dp),
-          enabled =
-              state.isDepartmentInvalid == false &&
-                  state.isRollInvalid == false &&
-                  state.isYearInvalid == false &&
-                  state.isSemesterInvalid == false,
-          onClick = { vm.attemptLogin() },
-      ) {
-        Icon(
-            imageVector = iconArrowForward,
-            contentDescription = "Login",
-        )
-      }
-    }
-  }
+    OutlinedTextField(
+        modifier = modifier,
+        label = { Text("Departmental Code") },
+        value = state.department,
+        singleLine = true,
+        onValueChange = { value -> vm.updateDepartment(value) },
+        isError = state.isDepartmentInvalid == true,
+    )
+}
+
+@Composable
+internal fun RollNumberTextField(
+    vm: LoginViewModel,
+    state: LoginState,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedTextField(
+        modifier = modifier,
+        label = { Text("Roll Number") },
+        value = state.roll,
+        singleLine = true,
+        onValueChange = { value -> vm.updateRoll(value) },
+        isError = state.isRollInvalid == true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+    )
+}
+
+@Composable
+internal fun BatchYearTextField(
+    vm: LoginViewModel,
+    state: LoginState,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedTextField(
+        modifier = modifier,
+        label = { Text("Batch Year") },
+        value = state.year,
+        singleLine = true,
+        onValueChange = { value -> vm.updateYear(value) },
+        isError = state.isYearInvalid == true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+    )
+}
+
+@Composable
+internal fun SemesterTextField(
+    vm: LoginViewModel,
+    state: LoginState,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedTextField(
+        modifier = modifier,
+        label = { Text("Semester") },
+        value = state.semester,
+        singleLine = true,
+        onValueChange = { value -> vm.updateSemester(value) },
+        isError = state.isSemesterInvalid == true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+    )
 }
