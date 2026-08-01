@@ -1,6 +1,5 @@
 package io.github.easeatten.ui.nav.home
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,21 +40,19 @@ fun HomePageDashboard(
 ) {
     if (!attendance.valid) return
 
-    val firstName =
-        attendance.name.substringBefore(' ').lowercase().replaceFirstChar { it.uppercase() }
-
-    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     val greeting =
-        when (hour) {
+        when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
             in 5..11 -> "Morning"
             in 12..16 -> "Afternoon"
             else -> "Evening"
         }
+    val firstName =
+        attendance.name.substringBefore(' ').lowercase().replaceFirstChar { it.uppercase() }
 
-    Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
+    Column(modifier = Modifier.fillMaxSize()) {
         Text(
-            modifier = Modifier.animateContentSize(),
-            text = "Good $greeting,${if (firstName == "") "" else "\n$firstName"}",
+            modifier = Modifier.padding(20.dp),
+            text = "Good $greeting,\n$firstName",
             style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
         )
 
