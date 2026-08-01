@@ -61,36 +61,16 @@ fun HomePageSettings(
         )
 
         LazyColumn {
-            item {
-                Text(
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                    text = "Appearance",
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
+            val sectionModifier = Modifier.padding(horizontal = 20.dp)
+            val itemModifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp)
 
-            val modifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp)
+            item { SectionText(sectionModifier, "Appearance") }
+            item { ColorSchemeOption(vm, settings, itemModifier) }
+            item { DarkModeOption(vm, settings, itemModifier) }
+            item { DynamicColorSwitch(vm, settings, itemModifier) }
+            item { TypographyOption(vm, settings, itemModifier) }
 
-            item { ColorSchemeSettingsOption(vm, settings, modifier) }
-
-            item { DarkModeSettingsOption(vm, settings, modifier) }
-
-            if (isDynamicColorSupported) {
-                item { DynamicColorSettingsSwitch(vm, settings, modifier) }
-            }
-
-            item { TypographySettingsOption(vm, settings, modifier) }
-
-            item {
-                SettingsDangerButton(
-                    modifier = modifier,
-                    text = "Logout",
-                    confirmText = "Are you sure you want to logout?",
-                ) {
-                    vm.logout()
-                    navController.navigate(NavDestination.LOGIN.route()) { popUpTo(0) }
-                }
-            }
+            item { LogoutButton(navController, vm, itemModifier) }
         }
     }
 }
@@ -254,23 +234,30 @@ internal fun SettingsDangerButton(
 }
 
 @Composable
-internal fun DynamicColorSettingsSwitch(
+internal fun SectionText(modifier: Modifier = Modifier, text: String) {
+    Text(modifier = modifier, text = text, color = MaterialTheme.colorScheme.primary)
+}
+
+@Composable
+internal fun DynamicColorSwitch(
     vm: HomeViewModel,
     settings: SettingsData,
     modifier: Modifier = Modifier,
 ) {
-    SettingsSwitch(
-        modifier = modifier,
-        text = "Dynamic Colors",
-        subtext = "Colors by Material You",
-        checked = settings.themeDynamicColor,
-    ) {
-        vm.updateDynamicColor(!settings.themeDynamicColor)
+    if (isDynamicColorSupported) {
+        SettingsSwitch(
+            modifier = modifier,
+            text = "Dynamic Colors",
+            subtext = "Colors by Material You",
+            checked = settings.themeDynamicColor,
+        ) {
+            vm.updateDynamicColor(!settings.themeDynamicColor)
+        }
     }
 }
 
 @Composable
-internal fun ColorSchemeSettingsOption(
+internal fun ColorSchemeOption(
     vm: HomeViewModel,
     settings: SettingsData,
     modifier: Modifier = Modifier,
@@ -289,7 +276,7 @@ internal fun ColorSchemeSettingsOption(
 }
 
 @Composable
-internal fun DarkModeSettingsOption(
+internal fun DarkModeOption(
     vm: HomeViewModel,
     settings: SettingsData,
     modifier: Modifier = Modifier,
@@ -314,7 +301,7 @@ internal fun DarkModeSettingsOption(
 }
 
 @Composable
-internal fun TypographySettingsOption(
+internal fun TypographyOption(
     vm: HomeViewModel,
     settings: SettingsData,
     modifier: Modifier = Modifier,
@@ -327,5 +314,21 @@ internal fun TypographySettingsOption(
         selected = settings.themeTypography,
     ) {
         vm.updateTypography(it)
+    }
+}
+
+@Composable
+internal fun LogoutButton(
+    navController: NavController,
+    vm: HomeViewModel,
+    modifier: Modifier = Modifier,
+) {
+    SettingsDangerButton(
+        modifier = modifier,
+        text = "Logout",
+        confirmText = "Are you sure you want to logout?",
+    ) {
+        vm.logout()
+        navController.navigate(NavDestination.LOGIN.route()) { popUpTo(0) }
     }
 }
