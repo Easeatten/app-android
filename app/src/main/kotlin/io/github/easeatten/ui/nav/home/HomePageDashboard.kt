@@ -51,7 +51,7 @@ fun HomePageDashboard(
 
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp),
             text = "Good $greeting,\n$firstName",
             style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
         )
@@ -66,7 +66,7 @@ fun HomePageDashboard(
 internal fun AttendanceCard(attendance: AttendanceData, settings: SettingsData) {
     ElevatedCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-        modifier = Modifier.fillMaxWidth().padding(5.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp),
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(15.dp)) {
             Row(

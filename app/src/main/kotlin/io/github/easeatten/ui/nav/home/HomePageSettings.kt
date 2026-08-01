@@ -55,7 +55,7 @@ fun HomePageSettings(
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp),
             text = "Settings",
             style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
         )
