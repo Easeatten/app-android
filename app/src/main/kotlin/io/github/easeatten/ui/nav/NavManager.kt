@@ -19,6 +19,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import io.github.easeatten.data.repos.SettingsRepository
 import io.github.easeatten.data.repos.UserRepository
+import io.github.easeatten.ui.nav.attendance.AttendancePage
 import io.github.easeatten.ui.nav.home.HomeScaffold
 import io.github.easeatten.ui.nav.login.DetailsPage
 import io.github.easeatten.ui.nav.onboarding.LandingPage
@@ -82,6 +83,7 @@ fun NavManager() {
                 composable(NavDestination.LOGIN_DETAILS.route()) { DetailsPage(navController) }
             }
             composable(NavDestination.HOME.route()) { HomeScaffold(navController) }
+            composable(NavDestination.ATTENDANCE.route()) { AttendancePage(navController) }
         }
     }
 }
