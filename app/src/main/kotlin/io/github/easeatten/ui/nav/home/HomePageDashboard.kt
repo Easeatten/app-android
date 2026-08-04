@@ -1,5 +1,6 @@
 package io.github.easeatten.ui.nav.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +24,7 @@ import androidx.navigation.NavController
 import io.github.easeatten.data.sources.AttendanceData
 import io.github.easeatten.data.sources.LoginData
 import io.github.easeatten.data.sources.SettingsData
+import io.github.easeatten.ui.nav.NavDestination
 import io.github.easeatten.ui.viewmodels.nav.HomeState
 import io.github.easeatten.ui.viewmodels.nav.HomeViewModel
 import java.util.Calendar
@@ -57,16 +59,23 @@ fun HomePageDashboard(
         )
 
         LazyVerticalStaggeredGrid(columns = StaggeredGridCells.Adaptive(300.dp)) {
-            item { AttendanceCard(attendance, settings) }
+            item { AttendanceCard(navController, attendance, settings) }
         }
     }
 }
 
 @Composable
-internal fun AttendanceCard(attendance: AttendanceData, settings: SettingsData) {
+internal fun AttendanceCard(
+    navController: NavController,
+    attendance: AttendanceData,
+    settings: SettingsData,
+) {
     ElevatedCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp),
+        modifier =
+            Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp).clickable {
+                navController.navigate(NavDestination.ATTENDANCE.route())
+            },
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(15.dp)) {
             Row(
