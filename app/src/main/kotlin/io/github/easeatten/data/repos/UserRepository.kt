@@ -13,10 +13,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import sxcapi.Department
-import sxcapi.Exception as SxcapiException
-import sxcapi.Session
-import sxcapi.Student
 
 class UserRepository(private val context: Context) {
     private val logTag = "EaseattenUserRepository"
@@ -24,7 +20,7 @@ class UserRepository(private val context: Context) {
     // Backend `Session` object. It can perform several actions pertaining to a `Student`, including
     // fetching attendance records, among other things. The backend is written in Rust and ported
     // over with Kotlin FFI bindings.
-    private val sxcapiSession = Session()
+    private val sxcapiSession = sxcapi.Session()
     private val sxcapiMutex = Mutex()
 
     val loginFlow = context.LoginDataStore.data
@@ -36,7 +32,9 @@ class UserRepository(private val context: Context) {
         roll: UInt,
         semester: UInt,
     ): AttendanceData = sxcapiMutex.withLock {
-        sxcapiSession.fetchAttendance(Student(department, year, roll), semester).toAttendanceData()
+        sxcapiSession
+            .fetchAttendance(sxcapi.Student(department, year, roll), semester)
+            .toAttendanceData()
     }
 
     suspend fun registerUser(
@@ -46,7 +44,7 @@ class UserRepository(private val context: Context) {
         semester: UInt,
     ): String? {
         val department =
-            runCatching { enumValueOf<Department>(departmentCode) }
+            runCatching { enumValueOf<sxcapi.Department>(departmentCode) }
                 .getOrElse {
                     return "Unknown Department"
                 }
@@ -66,13 +64,13 @@ class UserRepository(private val context: Context) {
                     semester = semester,
                 )
             }
-        } catch (e: SxcapiException.Parse) {
+        } catch (e: sxcapi.Exception.Parse) {
             message = "Student Not Found"
             Log.e(logTag, e.message!!)
-        } catch (e: SxcapiException.Validation) {
+        } catch (e: sxcapi.Exception.Validation) {
             message = "Invalid Details"
             Log.e(logTag, e.message!!)
-        } catch (e: SxcapiException) {
+        } catch (e: sxcapi.Exception) {
             message = "Connection Failure"
             Log.e(logTag, e.message!!)
         }
@@ -92,7 +90,7 @@ class UserRepository(private val context: Context) {
         if (!login.valid) return
 
         val department =
-            runCatching { enumValueOf<Department>(login.departmentCode) }
+            runCatching { enumValueOf<sxcapi.Department>(login.departmentCode) }
                 .getOrElse {
                     Log.e(logTag, "Unexpected department value found: ${login.departmentCode}")
                     return
@@ -107,7 +105,7 @@ class UserRepository(private val context: Context) {
                         login.roll,
                         login.semester,
                     )
-            } catch (e: SxcapiException.Validation) {
+            } catch (e: sxcapi.Exception.Validation) {
                 // Exception during form validation suggests that the server is unable to find the
                 // student as per the details table. So, explore the possibility that the user has
                 // moved on to the next semester.
@@ -126,7 +124,7 @@ class UserRepository(private val context: Context) {
 
                 context.LoginDataStore.updateData { it.copy(semester = login.semester + 1u) }
             }
-        } catch (e: SxcapiException) {
+        } catch (e: sxcapi.Exception) {
             Log.e(logTag, "Failed to fetch attendance details: ${e.message!!}")
         }
 
