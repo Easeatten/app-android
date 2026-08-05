@@ -91,11 +91,18 @@ class UserRepository(private val context: Context) {
 
         if (!login.valid) return
 
+        val department =
+            runCatching { enumValueOf<Department>(login.departmentCode) }
+                .getOrElse {
+                    Log.e(logTag, "Unexpected department value found: ${login.departmentCode}")
+                    return
+                }
+
         try {
             try {
                 data =
                     fetchAttendanceDataFromSource(
-                        enumValueOf<Department>(login.departmentCode),
+                        department,
                         login.year,
                         login.roll,
                         login.semester,
@@ -111,7 +118,7 @@ class UserRepository(private val context: Context) {
 
                 data =
                     fetchAttendanceDataFromSource(
-                        enumValueOf<Department>(login.departmentCode),
+                        department,
                         login.year,
                         login.roll,
                         login.semester + 1u,
@@ -121,8 +128,6 @@ class UserRepository(private val context: Context) {
             }
         } catch (e: SxcapiException) {
             Log.e(logTag, "Failed to fetch attendance details: ${e.message!!}")
-        } catch (e: IllegalArgumentException) {
-            Log.e(logTag, "Invalid department found: ${e.message!!}")
         }
 
         if (data != null) context.AttendanceDataStore.updateData { data }
