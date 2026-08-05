@@ -16,7 +16,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import sxcapi.AttendanceData as SxcapiAttendanceData
 
 @Serializable
 data class AttendanceRecord(
@@ -68,7 +67,7 @@ data class AttendanceData(
     }
 }
 
-fun SxcapiAttendanceData.toAttendanceData(): AttendanceData =
+fun sxcapi.AttendanceData.toAttendanceData(): AttendanceData =
     AttendanceData(
         valid = true,
         name = this.name,
