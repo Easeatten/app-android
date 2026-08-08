@@ -292,6 +292,7 @@ class AttendanceGlanceRefreshAction : ActionCallback {
         glanceId: GlanceId,
         parameters: ActionParameters,
     ) {
+        UserRepository(context).refreshAttendanceData()
         AttendanceGlance().update(context, glanceId)
     }
 }
