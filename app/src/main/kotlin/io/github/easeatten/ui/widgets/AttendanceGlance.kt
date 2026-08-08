@@ -16,6 +16,7 @@ import androidx.glance.LocalSize
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
+import androidx.glance.appwidget.CircularProgressIndicator
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
@@ -82,6 +83,13 @@ class AttendanceGlance : GlanceAppWidget() {
     }
 
     @Composable
+    private fun LoadingContent() {
+        Box(modifier = GlanceModifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = GlanceTheme.colors.primary)
+        }
+    }
+
+    @Composable
     private fun Content(settings: SettingsData, login: LoginData, attendance: AttendanceData) {
         val titleBarHeight = 50.dp // Approximation
         val contentHeight = LocalSize.current.height - titleBarHeight
@@ -98,6 +106,7 @@ class AttendanceGlance : GlanceAppWidget() {
             titleBar = { if (showContentTitleBar) ContentTitleBar() },
         ) {
             if (!settings.valid || !login.valid) {
+                LoadingContent()
                 return@Scaffold
             }
 
