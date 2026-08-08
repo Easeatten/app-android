@@ -66,47 +66,23 @@ class AttendanceGlance : GlanceAppWidget() {
             val loginState = userRepository.loginFlow.collectAsState(LoginData())
             val login = loginState.value
 
-            if (login.valid) {
-                GlanceThemeManager(settings) {
-                    when {
-                        !login.loggedIn ->
-                            ErrorContent(
-                                ImageProvider(R.drawable.baseline_login_24px),
-                                "Login Required",
-                            )
-                        !attendance.valid ->
-                            ErrorContent(
-                                ImageProvider(R.drawable.baseline_error_24px),
-                                "Attendance Error",
-                            )
-                        else -> Content(attendance, settings.attendanceTargetPercentage)
-                    }
-                }
-            }
+            GlanceThemeManager(settings) { Content(settings, login, attendance) }
         }
     }
 
     @Composable
     private fun ErrorContent(errorImage: ImageProvider, errorDescription: String) {
-        Scaffold(
-            modifier =
-                GlanceModifier.fillMaxSize()
-                    .padding(20.dp)
-                    .clickable(actionStartActivity<MainActivity>()),
-            backgroundColor = GlanceTheme.colors.errorContainer,
-        ) {
-            Box(modifier = GlanceModifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Image(
-                    provider = errorImage,
-                    contentDescription = errorDescription,
-                    colorFilter = ColorFilter.tint(GlanceTheme.colors.onErrorContainer),
-                )
-            }
+        Box(modifier = GlanceModifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Image(
+                provider = errorImage,
+                contentDescription = errorDescription,
+                colorFilter = ColorFilter.tint(GlanceTheme.colors.error),
+            )
         }
     }
 
     @Composable
-    private fun Content(attendance: AttendanceData, target: Float) {
+    private fun Content(settings: SettingsData, login: LoginData, attendance: AttendanceData) {
         val titleBarHeight = 50.dp // Approximation
         val contentHeight = LocalSize.current.height - titleBarHeight
         val showContentTitleBar = contentHeight > titleBarHeight
@@ -121,6 +97,22 @@ class AttendanceGlance : GlanceAppWidget() {
             backgroundColor = GlanceTheme.colors.surface,
             titleBar = { if (showContentTitleBar) ContentTitleBar() },
         ) {
+            if (!settings.valid || !login.valid) {
+                return@Scaffold
+            }
+
+            if (!login.loggedIn) {
+                ErrorContent(ImageProvider(R.drawable.baseline_login_24px), "Login Required")
+                return@Scaffold
+            }
+
+            if (!attendance.valid) {
+                ErrorContent(ImageProvider(R.drawable.baseline_error_24px), "Attendance Error")
+                return@Scaffold
+            }
+
+            val target = settings.attendanceTargetPercentage
+
             Column(
                 modifier =
                     if (showContentSubjectList) GlanceModifier.fillMaxSize().padding(bottom = 10.dp)
