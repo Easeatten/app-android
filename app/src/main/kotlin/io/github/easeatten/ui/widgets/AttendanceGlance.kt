@@ -251,16 +251,19 @@ class AttendanceGlance : GlanceAppWidget() {
             items(recordsByScore) {
                 Box(modifier = GlanceModifier.padding(vertical = 2.dp)) {
                     val score = it.getScore(target)
+                    val backgroundColor =
+                        if (score < 0) GlanceTheme.colors.errorContainer
+                        else GlanceTheme.colors.tertiaryContainer
+                    val foregroundColor =
+                        if (score < 0) GlanceTheme.colors.onErrorContainer
+                        else GlanceTheme.colors.onTertiaryContainer
 
                     Column(
                         modifier =
                             GlanceModifier.fillMaxSize()
                                 .cornerRadius(10.dp)
                                 .padding(10.dp)
-                                .background(
-                                    if (score < 0) GlanceTheme.colors.errorContainer
-                                    else GlanceTheme.colors.secondaryContainer
-                                )
+                                .background(backgroundColor)
                     ) {
                         Text(
                             text = it.subject,
@@ -268,21 +271,22 @@ class AttendanceGlance : GlanceAppWidget() {
                             style =
                                 TextStyle(
                                     fontSize = 14.sp,
-                                    color = GlanceTheme.colors.onBackground,
+                                    color = foregroundColor,
                                     fontWeight = FontWeight.Bold,
                                 ),
                         )
 
-                        val textClassesStatus =
-                            if (score < 0) "${-score} behind" else "$score ahead"
-                        val textPractical = if (it.subjectPractical) " | Practical" else ""
+                        Row {
+                            val statusText = if (score < 0) "${-score} behind" else "$score ahead"
+                            val style = TextStyle(fontSize = 13.sp, color = foregroundColor)
 
-                        Text(
-                            text = textClassesStatus + textPractical,
-                            maxLines = 1,
-                            style =
-                                TextStyle(fontSize = 13.sp, color = GlanceTheme.colors.onBackground),
-                        )
+                            Text(text = statusText, maxLines = 1, style = style)
+
+                            if (it.subjectPractical) {
+                                Text(text = " ⋅ ", style = style)
+                                Text(text = "Practical", style = style)
+                            }
+                        }
                     }
                 }
             }
