@@ -8,8 +8,9 @@ import io.github.easeatten.data.sources.AttendanceSerializer
 import io.github.easeatten.data.sources.LoginDataStore
 import io.github.easeatten.data.sources.LoginSerializer
 import io.github.easeatten.data.sources.toAttendanceData
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.merge
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import sxcapi.Department
@@ -27,66 +28,16 @@ class UserRepository(private val context: Context) {
     private val sxcapiMutex = Mutex()
 
     val loginFlow = context.LoginDataStore.data
-    val attendanceFlow =
-        merge(
-            context.AttendanceDataStore.data,
-            loginFlow.mapNotNull { login ->
-                var data: AttendanceData? = null
+    val attendanceFlow = context.AttendanceDataStore.data
 
-                try {
-                    try {
-                        data = sxcapiMutex.withLock {
-                            sxcapiSession
-                                .fetchAttendance(
-                                    Student(
-                                        enumValueOf<Department>(login.departmentCode),
-                                        login.year,
-                                        login.roll,
-                                    ),
-                                    login.semester,
-                                )
-                                .toAttendanceData()
-                        }
-                    } catch (e: SxcapiException.Validation) {
-                        // Exception during form validation suggests that the server is unable to
-                        // find the
-                        // student as per the details table. So, explore the possibility that the
-                        // user has
-                        // moved on to the next semester.
-                        Log.w(
-                            logTag,
-                            "Failed to fetch attendance details, trying with succeeding semester: ${e.message!!}",
-                        )
-
-                        data = sxcapiMutex.withLock {
-                            sxcapiSession
-                                .fetchAttendance(
-                                    Student(
-                                        enumValueOf<Department>(login.departmentCode),
-                                        login.year,
-                                        login.roll,
-                                    ),
-                                    login.semester + 1u,
-                                )
-                                .toAttendanceData()
-                        }
-                        context.LoginDataStore.updateData {
-                            it.copy(semester = login.semester + 1u)
-                        }
-                    }
-                } catch (e: SxcapiException) {
-                    Log.e(logTag, "Failed to fetch attendance details: ${e.message!!}")
-                } catch (e: IllegalArgumentException) {
-                    Log.e(logTag, "Invalid department found: ${e.message!!}")
-                }
-
-                if (data != null) {
-                    context.AttendanceDataStore.updateData { data }
-                }
-
-                data
-            },
-        )
+    private suspend fun fetchAttendanceDataFromSource(
+        department: sxcapi.Department,
+        year: UInt,
+        roll: UInt,
+        semester: UInt,
+    ): AttendanceData = sxcapiMutex.withLock {
+        sxcapiSession.fetchAttendance(Student(department, year, roll), semester).toAttendanceData()
+    }
 
     suspend fun registerUser(
         departmentCode: String,
@@ -94,20 +45,18 @@ class UserRepository(private val context: Context) {
         roll: UInt,
         semester: UInt,
     ): String? {
-        val department = runCatching { enumValueOf<Department>(departmentCode) }.getOrNull()
-        if (department == null) {
-            return "Unknown Department"
-        }
+        val department =
+            runCatching { enumValueOf<Department>(departmentCode) }
+                .getOrElse {
+                    return "Unknown Department"
+                }
 
         var message: String? = null
         try {
-            val attendanceData = sxcapiMutex.withLock {
-                sxcapiSession
-                    .fetchAttendance(Student(department, year, roll), semester)
-                    .toAttendanceData()
+            context.AttendanceDataStore.updateData {
+                fetchAttendanceDataFromSource(department, year, roll, semester)
             }
 
-            context.AttendanceDataStore.updateData { attendanceData }
             context.LoginDataStore.updateData {
                 it.copy(
                     loggedIn = true,
@@ -134,5 +83,48 @@ class UserRepository(private val context: Context) {
     suspend fun unregisterUser() {
         context.AttendanceDataStore.updateData { AttendanceSerializer.defaultValue }
         context.LoginDataStore.updateData { LoginSerializer.defaultValue }
+    }
+
+    suspend fun refreshAttendanceData() {
+        val login = loginFlow.stateIn(CoroutineScope(EmptyCoroutineContext)).value
+        var data: AttendanceData? = null
+
+        if (!login.valid) return
+
+        try {
+            try {
+                data =
+                    fetchAttendanceDataFromSource(
+                        enumValueOf<Department>(login.departmentCode),
+                        login.year,
+                        login.roll,
+                        login.semester,
+                    )
+            } catch (e: SxcapiException.Validation) {
+                // Exception during form validation suggests that the server is unable to find the
+                // student as per the details table. So, explore the possibility that the user has
+                // moved on to the next semester.
+                Log.w(
+                    logTag,
+                    "Failed to fetch attendance details, trying with succeeding semester: ${e.message!!}",
+                )
+
+                data =
+                    fetchAttendanceDataFromSource(
+                        enumValueOf<Department>(login.departmentCode),
+                        login.year,
+                        login.roll,
+                        login.semester + 1u,
+                    )
+
+                context.LoginDataStore.updateData { it.copy(semester = login.semester + 1u) }
+            }
+        } catch (e: SxcapiException) {
+            Log.e(logTag, "Failed to fetch attendance details: ${e.message!!}")
+        } catch (e: IllegalArgumentException) {
+            Log.e(logTag, "Invalid department found: ${e.message!!}")
+        }
+
+        if (data != null) context.AttendanceDataStore.updateData { data }
     }
 }

@@ -55,7 +55,7 @@ data class AttendanceData(
         Calendar.Builder()
             .setDate(
                 this.lastUpdatedYear.toInt(),
-                this.lastUpdatedMonth.toInt(),
+                this.lastUpdatedMonth.toInt() - 1, // Months indexed `0..11`.
                 this.lastUpdatedDay.toInt(),
             )
             .build()
