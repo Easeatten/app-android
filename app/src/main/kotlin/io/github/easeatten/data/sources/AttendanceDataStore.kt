@@ -1,6 +1,7 @@
 package io.github.easeatten.data.sources
 
 import android.content.Context
+import android.icu.util.Calendar
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
@@ -8,8 +9,6 @@ import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStore
 import java.io.InputStream
 import java.io.OutputStream
-import java.util.Calendar
-import java.util.Date
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlinx.coroutines.Dispatchers
@@ -51,15 +50,16 @@ data class AttendanceData(
     val lastUpdatedDay: UInt = 0u,
     val records: List<AttendanceRecord> = listOf(),
 ) {
-    fun getLastUpdatedDate(): Date =
-        Calendar.Builder()
-            .setDate(
-                this.lastUpdatedYear.toInt(),
-                this.lastUpdatedMonth.toInt() - 1, // Months indexed `0..11`.
-                this.lastUpdatedDay.toInt(),
-            )
-            .build()
-            .time
+    fun getLastUpdatedDate(): Calendar {
+        val calendar = Calendar.getInstance()
+
+        calendar.set(
+            this.lastUpdatedYear.toInt(),
+            this.lastUpdatedMonth.toInt() - 1, // Months indexed `0..11`.
+            this.lastUpdatedDay.toInt(),
+        )
+        return calendar
+    }
 
     fun getAggregatePercentage(): Float {
         if (this.records.isEmpty()) return 1.0f
