@@ -1,11 +1,11 @@
 package io.github.easeatten.ui.viewmodels.nav
 
+import android.icu.util.Calendar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import io.github.easeatten.data.repos.UserRepository
 import io.github.easeatten.data.sources.LoginData
-import java.util.Calendar
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow

@@ -1,25 +1,18 @@
 package io.github.easeatten.ui.nav.home
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,7 +20,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -35,6 +27,8 @@ import androidx.navigation.NavController
 import io.github.easeatten.data.sources.AttendanceData
 import io.github.easeatten.data.sources.LoginData
 import io.github.easeatten.data.sources.SettingsData
+import io.github.easeatten.ui.common.ConfirmDialogCard
+import io.github.easeatten.ui.common.RadioButtonDialogCard
 import io.github.easeatten.ui.nav.NavDestination
 import io.github.easeatten.ui.theme.colorscheme.ColorScheme
 import io.github.easeatten.ui.theme.colorscheme.isDynamicColorSupported
@@ -55,42 +49,22 @@ fun HomePageSettings(
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp),
             text = "Settings",
             style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
         )
 
         LazyColumn {
-            item {
-                Text(
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                    text = "Appearance",
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
+            val sectionModifier = Modifier.padding(horizontal = 20.dp)
+            val itemModifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp)
 
-            val modifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp)
+            item { SectionText(sectionModifier, "Appearance") }
+            item { ColorSchemeOption(vm, settings, itemModifier) }
+            item { DarkModeOption(vm, settings, itemModifier) }
+            item { DynamicColorSwitch(vm, settings, itemModifier) }
+            item { TypographyOption(vm, settings, itemModifier) }
 
-            item { ColorSchemeSettingsOption(vm, settings, modifier) }
-
-            item { DarkModeSettingsOption(vm, settings, modifier) }
-
-            if (isDynamicColorSupported) {
-                item { DynamicColorSettingsSwitch(vm, settings, modifier) }
-            }
-
-            item { TypographySettingsOption(vm, settings, modifier) }
-
-            item {
-                SettingsDangerButton(
-                    modifier = modifier,
-                    text = "Logout",
-                    confirmText = "Are you sure you want to logout?",
-                ) {
-                    vm.logout()
-                    navController.navigate(NavDestination.LOGIN.route()) { popUpTo(0) }
-                }
-            }
+            item { LogoutButton(navController, vm, itemModifier) }
         }
     }
 }
@@ -149,52 +123,14 @@ internal fun <T> SettingsOption(
     if (!enabled || !dialog) return
 
     Dialog(onDismissRequest = { dialog = false }) {
-        Card {
-            Column {
-                Text(
-                    modifier = Modifier.padding(20.dp),
-                    text = text,
-                    style = MaterialTheme.typography.titleLarge,
-                )
-
-                LazyColumn(modifier = Modifier.selectableGroup()) {
-                    iterable.forEach { elem ->
-                        item {
-                            Box(
-                                modifier =
-                                    Modifier.fillMaxWidth()
-                                        .selectable(
-                                            role = Role.RadioButton,
-                                            selected = (selected == elem),
-                                            onClick = {
-                                                onSelectedChange(elem)
-                                                dialog = false
-                                            },
-                                        )
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(10.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    RadioButton(
-                                        modifier = Modifier.padding(horizontal = 10.dp),
-                                        selected = (selected == elem),
-                                        onClick = null,
-                                    )
-
-                                    Text(
-                                        modifier = Modifier.padding(horizontal = 10.dp),
-                                        text = labelMap(elem),
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.padding(vertical = 10.dp))
-            }
-        }
+        RadioButtonDialogCard(
+            modifier = Modifier.fillMaxWidth(),
+            title = text,
+            options = iterable,
+            optionsToLabels = labelMap,
+            selected = selected,
+            onSelectedChange = onSelectedChange,
+        )
     }
 }
 
@@ -225,52 +161,43 @@ internal fun SettingsDangerButton(
     if (!enabled || !dialog) return
 
     Dialog(onDismissRequest = { dialog = false }) {
-        Card {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-            ) {
-                Text(text = text, style = MaterialTheme.typography.titleLarge)
+        ConfirmDialogCard(
+            modifier = Modifier.fillMaxWidth(),
+            title = text,
+            message = confirmText,
+            positiveButtonText = "Yes",
+            negativeButtonText = "No",
+            onPositiveButtonClick = onClick,
+            onNegativeButtonClick = { dialog = false },
+        )
+    }
+}
 
-                Text(text = confirmText)
+@Composable
+internal fun SectionText(modifier: Modifier = Modifier, text: String) {
+    Text(modifier = modifier, text = text, color = MaterialTheme.colorScheme.primary)
+}
 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(
-                        onClick = {
-                            dialog = false
-                            onClick()
-                        }
-                    ) {
-                        Text(text = "Yes")
-                    }
-
-                    Spacer(modifier = Modifier.padding(horizontal = 5.dp))
-
-                    TextButton(onClick = { dialog = false }) { Text(text = "No") }
-                }
-            }
+@Composable
+internal fun DynamicColorSwitch(
+    vm: HomeViewModel,
+    settings: SettingsData,
+    modifier: Modifier = Modifier,
+) {
+    if (isDynamicColorSupported) {
+        SettingsSwitch(
+            modifier = modifier,
+            text = "Dynamic Colors",
+            subtext = "Colors by Material You",
+            checked = settings.themeDynamicColor,
+        ) {
+            vm.updateDynamicColor(!settings.themeDynamicColor)
         }
     }
 }
 
 @Composable
-internal fun DynamicColorSettingsSwitch(
-    vm: HomeViewModel,
-    settings: SettingsData,
-    modifier: Modifier = Modifier,
-) {
-    SettingsSwitch(
-        modifier = modifier,
-        text = "Dynamic Colors",
-        subtext = "Colors by Material You",
-        checked = settings.themeDynamicColor,
-    ) {
-        vm.updateDynamicColor(!settings.themeDynamicColor)
-    }
-}
-
-@Composable
-internal fun ColorSchemeSettingsOption(
+internal fun ColorSchemeOption(
     vm: HomeViewModel,
     settings: SettingsData,
     modifier: Modifier = Modifier,
@@ -289,7 +216,7 @@ internal fun ColorSchemeSettingsOption(
 }
 
 @Composable
-internal fun DarkModeSettingsOption(
+internal fun DarkModeOption(
     vm: HomeViewModel,
     settings: SettingsData,
     modifier: Modifier = Modifier,
@@ -314,7 +241,7 @@ internal fun DarkModeSettingsOption(
 }
 
 @Composable
-internal fun TypographySettingsOption(
+internal fun TypographyOption(
     vm: HomeViewModel,
     settings: SettingsData,
     modifier: Modifier = Modifier,
@@ -327,5 +254,21 @@ internal fun TypographySettingsOption(
         selected = settings.themeTypography,
     ) {
         vm.updateTypography(it)
+    }
+}
+
+@Composable
+internal fun LogoutButton(
+    navController: NavController,
+    vm: HomeViewModel,
+    modifier: Modifier = Modifier,
+) {
+    SettingsDangerButton(
+        modifier = modifier,
+        text = "Logout",
+        confirmText = "Are you sure you want to logout?",
+    ) {
+        vm.logout()
+        navController.navigate(NavDestination.LOGIN.route()) { popUpTo(0) }
     }
 }

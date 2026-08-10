@@ -30,4 +30,10 @@ class SettingsRepository(private val context: Context) {
     suspend fun updateThemeTypography(value: Typography) {
         context.SettingsDataStore.updateData { it.copy(themeTypography = value) }
     }
+
+    suspend fun updateAttendanceTargetPercentage(value: Float) {
+        context.SettingsDataStore.updateData {
+            it.copy(attendanceTargetPercentage = value.coerceIn(0.0f, 1.0f))
+        }
+    }
 }
