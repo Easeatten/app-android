@@ -30,10 +30,10 @@ androidx-datastore = { group = "androidx.datastore", name = "datastore", version
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "lib-androidx-espresso-core" }
 androidx-glance = { group = "androidx.glance", name = "glance", version.ref = "lib-androidx-glance" }
 androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "lib-androidx-glance" }
-androidx-glance-preview = { group = "androidx.glance", name = "glance-preview", version.ref = "lib-androidx-glance" }
 androidx-glance-material3 = { group = "androidx.glance", name = "glance-material3", version.ref = "lib-androidx-glance" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "lib-androidx-junit" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "lib-navigation-compose" }
+google-firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "lib-firebase-bom" }
 jna = { group = "net.java.dev.jna", name = "jna", version.ref = "lib-jna" }
 junit = { group = "junit", name = "junit", version.ref = "lib-junit" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "lib-serialization-json" }
