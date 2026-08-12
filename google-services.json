@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "987097518331",
+    "firebase_url": "https://easeatten-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "easeatten",
+    "storage_bucket": "easeatten.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:987097518331:android:de58be27779abc3ec9205e",
+        "android_client_info": {
+          "package_name": "io.github.easeatten"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPgx5x6DKUvjwNG1GZs3sJF4-6Nwm-HmQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
