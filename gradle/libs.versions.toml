@@ -14,6 +14,7 @@ lib-navigation-compose = "2.9.8"
 lib-serialization-json = "1.11.0"
 plug-android-application = "9.2.1"
 plug-detekt = "2.0.0-alpha.5"
+plug-google-services = "4.4.3"
 plug-kotlin-compose = "2.4.0"
 plug-kotlin-serialization = "2.4.0"
 plug-google-services = "4.4.3"
@@ -43,6 +44,7 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 [plugins]
 android-application = { id = "com.android.application", version.ref = "plug-android-application" }
 detekt = { id = "dev.detekt", version.ref = "plug-detekt" }
+google-services = { id = "com.google.gms.google-services", version.ref = "plug-google-services" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "plug-kotlin-compose" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "plug-kotlin-serialization" }
 google-services = { id = "com.google.gms.google-services", version.ref = "plug-google-services" }
