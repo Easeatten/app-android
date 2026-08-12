@@ -11,12 +11,7 @@ dependencyResolutionManagement {
 pluginManagement {
     repositories {
         gradlePluginPortal()
-        google {
-            content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("androidx.*")
-            }
-        }
+        google()
     }
 }
 
