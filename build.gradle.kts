@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.ncorti.ktfmt)
+    alias(libs.plugins.google.services) apply false
 }
 
 ktfmt { kotlinLangStyle() }
