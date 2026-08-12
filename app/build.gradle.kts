@@ -6,6 +6,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     // Firebase (with BOM)
     implementation(platform(libs.google.firebase.bom))
+    implementation(libs.google.firebase.database)
     // Other Dependencies
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.splashscreen)
