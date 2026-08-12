@@ -7,6 +7,7 @@ lib-androidx-espresso-core = "3.7.0"
 lib-androidx-glance = "1.1.1"
 lib-androidx-junit = "1.3.0"
 lib-andoidx-work-runtime-ktx = "2.11.2"
+lib-firebase-bom = "34.17.0"
 lib-jna = "5.19.1"
 lib-junit = "4.13.2"
 lib-navigation-compose = "2.9.8"
@@ -34,6 +35,7 @@ androidx-glance-material3 = { group = "androidx.glance", name = "glance-material
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "lib-androidx-junit" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "lib-navigation-compose" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "lib-andoidx-work-runtime-ktx" }
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "lib-firebase-bom" }
 jna = { group = "net.java.dev.jna", name = "jna", version.ref = "lib-jna" }
 junit = { group = "junit", name = "junit", version.ref = "lib-junit" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "lib-serialization-json" }
