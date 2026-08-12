@@ -6,11 +6,13 @@ lib-androidx-datastore = "1.2.1"
 lib-androidx-espresso-core = "3.7.0"
 lib-androidx-glance = "1.1.1"
 lib-androidx-junit = "1.3.0"
+lib-firebase-bom = "34.17.0"
 lib-jna = "5.19.1"
 lib-junit = "4.13.2"
 lib-navigation-compose = "2.9.8"
 lib-serialization-json = "1.11.0"
 plug-android-application = "9.2.1"
+plug-google-services = "4.5.0"
 plug-detekt = "2.0.0-alpha.5"
 plug-kotlin-compose = "2.4.0"
 plug-kotlin-serialization = "2.4.0"
@@ -39,6 +41,7 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 [plugins]
 android-application = { id = "com.android.application", version.ref = "plug-android-application" }
 detekt = { id = "dev.detekt", version.ref = "plug-detekt" }
+google-services = { id = "com.google.gms.google-services", version.ref = "plug-google-services" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "plug-kotlin-compose" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "plug-kotlin-serialization" }
 ncorti-ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "plug-ncorti-ktfmt" }
