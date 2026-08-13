@@ -8,6 +8,7 @@ import io.github.easeatten.data.sources.AttendanceSerializer
 import io.github.easeatten.data.sources.LoginDataStore
 import io.github.easeatten.data.sources.LoginSerializer
 import io.github.easeatten.data.sources.toAttendanceData
+import io.github.easeatten.database.Database
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.stateIn
@@ -128,6 +129,18 @@ class UserRepository(private val context: Context) {
             Log.e(logTag, "Failed to fetch attendance details: ${e.message!!}")
         }
 
-        if (data != null) context.AttendanceDataStore.updateData { data }
+        if (data != null) {
+            val database = Database("syllabus/links")
+            data.records.forEach { record ->
+                // The database cannot contain certain delimiters in the key.
+                val subject =
+                    record.subject
+                        .map { char -> if (char in ".$#[]/") " " else char }
+                        .joinToString("")
+                record.subjectSyllabusLink = database.read(subject.lowercase())
+            }
+
+            context.AttendanceDataStore.updateData { data }
+        }
     }
 }
