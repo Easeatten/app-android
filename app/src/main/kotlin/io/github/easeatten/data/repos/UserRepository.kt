@@ -8,6 +8,7 @@ import io.github.easeatten.data.sources.AttendanceSerializer
 import io.github.easeatten.data.sources.LoginDataStore
 import io.github.easeatten.data.sources.LoginSerializer
 import io.github.easeatten.data.sources.toAttendanceData
+import io.github.easeatten.database.DatabaseRepository
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.stateIn
@@ -52,7 +53,9 @@ class UserRepository(private val context: Context) {
         var message: String? = null
         try {
             context.AttendanceDataStore.updateData {
-                fetchAttendanceDataFromSource(department, year, roll, semester)
+                val data = fetchAttendanceDataFromSource(department, year, roll, semester)
+                querySyllabusLinks(data)
+                data
             }
 
             context.LoginDataStore.updateData {
@@ -128,6 +131,22 @@ class UserRepository(private val context: Context) {
             Log.e(logTag, "Failed to fetch attendance details: ${e.message!!}")
         }
 
-        if (data != null) context.AttendanceDataStore.updateData { data }
+        if (data != null) {
+            querySyllabusLinks(data)
+            context.AttendanceDataStore.updateData { data }
+        }
+    }
+
+    // Method to query subject syllabus links from the Database.
+    private suspend fun querySyllabusLinks(data: AttendanceData) {
+        val database = DatabaseRepository<String>("syllabus/links")
+        data.records.forEach { record ->
+            val subject =
+                // The database restricts usage of certain delimiters in the keys.
+                record.subject.map{
+                    char -> if (char in ".$#[]/") " " else char
+                }.joinToString("")
+            record.subjectSyllabusLink = database.read(subject.lowercase())
+        }
     }
 }
