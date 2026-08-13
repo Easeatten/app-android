@@ -21,6 +21,7 @@ import kotlinx.serialization.json.Json
 data class AttendanceRecord(
     val subject: String = "",
     val subjectPractical: Boolean = false,
+    var subjectSyllabusLink: String? = null,
     val attended: UInt = 0u,
     val delivered: UInt = 0u,
     val professors: List<String>,
