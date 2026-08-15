@@ -1,35 +1,31 @@
 package io.github.easeatten.database
 
-import android.util.Log
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
 
-@Suppress("TooGenericExceptionCaught")
-class Database(private val path: String, dataPersistenceEnabled: Boolean = false) {
+// The class has been written as per the requirements of the branch augustus/syllabus-update.
+// It may be modified later if required.
+@Suppress("Unchecked_Cast")
+class DatabaseRepository<T>(private val path: String) {
     private val database: FirebaseDatabase = FirebaseDatabase.getInstance(ROOT_URL)
-    //
-    //    init {
-    //        database.setPersistenceEnabled(dataPersistenceEnabled)
-    //    }
+    // getInstance() always returns the same singleton instance of FirebaseDatabase.
+    // This is not clearly mentioned in the docs.
+    // It's vaguely written as "Gets the default FirebaseDatabase instance".
 
+    // To get a reference to the root node of JSON tree.
     private val reference: DatabaseReference = database.reference
 
     companion object {
-        private const val LOGGER = "Firebase Database"
+        private const val LOGGER = "RealtimeDatabase"
         private const val ROOT_URL =
             "https://easeatten-default-rtdb.asia-southeast1.firebasedatabase.app/"
     }
 
-    suspend fun read(key: String): String? {
-        return try {
-            val snapshot = reference.child(path).child(key).get().await()
+    suspend fun read(key: String): T? {
+        val snapshot = reference.child(path).child(key).get().await()
 
-            if (!snapshot.exists()) null else snapshot.value as String
-        } catch (e: Exception) {
-            Log.e(LOGGER, "Failed to read data at path=${path}", e)
-            throw e
-        }
+        return if (snapshot.exists()) snapshot.value as T? else null
     }
 
     fun write(
