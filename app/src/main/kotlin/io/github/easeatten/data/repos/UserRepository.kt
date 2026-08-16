@@ -11,6 +11,7 @@ import io.github.easeatten.data.sources.toAttendanceData
 import io.github.easeatten.database.DatabaseRepository
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -44,6 +45,7 @@ class UserRepository(private val context: Context) {
         roll: UInt,
         semester: UInt,
     ): String? {
+        val settingsData = SettingsRepository(context).settingsFlow.first()
         val department =
             runCatching { enumValueOf<sxcapi.Department>(departmentCode) }
                 .getOrElse {
@@ -54,7 +56,10 @@ class UserRepository(private val context: Context) {
         try {
             context.AttendanceDataStore.updateData {
                 val data = fetchAttendanceDataFromSource(department, year, roll, semester)
-                querySyllabusLinks(data)
+                if (!settingsData.syllabusFetched) {
+                    querySyllabusLinks(data)
+                    SettingsRepository(context).updateSyllabusFetched(true)
+                }
                 data
             }
 
@@ -87,6 +92,7 @@ class UserRepository(private val context: Context) {
     }
 
     suspend fun refreshAttendanceData() {
+        val settingsData = SettingsRepository(context).settingsFlow.first()
         val login = loginFlow.stateIn(CoroutineScope(EmptyCoroutineContext)).value
         var data: AttendanceData? = null
 
@@ -132,7 +138,10 @@ class UserRepository(private val context: Context) {
         }
 
         if (data != null) {
-            querySyllabusLinks(data)
+            if (!settingsData.syllabusFetched) {
+                querySyllabusLinks(data)
+                SettingsRepository(context).updateSyllabusFetched(true)
+            }
             context.AttendanceDataStore.updateData { data }
         }
     }
@@ -143,9 +152,7 @@ class UserRepository(private val context: Context) {
         data.records.forEach { record ->
             val subject =
                 // The database restricts usage of certain delimiters in the keys.
-                record.subject.map{
-                    char -> if (char in ".$#[]/") " " else char
-                }.joinToString("")
+                record.subject.map { char -> if (char in ".$#[]/") " " else char }.joinToString("")
             record.subjectSyllabusLink = database.read(subject.lowercase())
         }
     }
