@@ -10,10 +10,18 @@ import io.github.easeatten.ui.theme.colorscheme.ColorScheme
 import io.github.easeatten.ui.theme.typography.Typography
 import java.io.InputStream
 import java.io.OutputStream
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 
 @Serializable
@@ -31,6 +39,9 @@ data class SettingsData(
     val themeTypography: Typography = Typography.DEFAULT,
     // The per-subject percentage threshold set by the user.
     val attendanceTargetPercentage: Float = 0.75f,
+    // The local time at which attendance is refreshed.
+    @Serializable(with = LocalTimeSerializer::class)
+    val attendanceRefreshTime: LocalTime = LocalTime.of(0, 0),
 )
 
 object SettingsSerializer : Serializer<SettingsData> {
@@ -57,3 +68,19 @@ val Context.SettingsDataStore: DataStore<SettingsData> by
         serializer = SettingsSerializer,
         corruptionHandler = ReplaceFileCorruptionHandler { SettingsSerializer.defaultValue },
     )
+
+object LocalTimeSerializer : KSerializer<LocalTime> {
+    // Pattern for 24hr format.
+    private val formatter = DateTimeFormatter.ofPattern("HH:mm")
+
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("io.github.easeatten.LocalTime", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: LocalTime) {
+        encoder.encodeString(value.format(formatter))
+    }
+
+    override fun deserialize(decoder: Decoder): LocalTime {
+        return LocalTime.parse(decoder.decodeString(), formatter)
+    }
+}
