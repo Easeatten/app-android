@@ -3,4 +3,5 @@
   description: Runs ktfmt on Kotlin source and script files.
   language: unsupported_script
   entry: gradlew --no-daemon ktfmtPreCommit
+  files: '\\.(kt|kts)$'
   pass_filenames: false
