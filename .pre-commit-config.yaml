@@ -9,6 +9,6 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
   - repo: .
-    rev: 512bdf57602e9fe5ba0c95c63d5c8514f2bba896
+    rev: d34fdb7910eb6c1fb784b8f0abd2c20b3a719481
     hooks:
       - id: gradle-ktfmt
