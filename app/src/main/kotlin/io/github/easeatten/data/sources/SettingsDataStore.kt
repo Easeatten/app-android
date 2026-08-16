@@ -31,6 +31,8 @@ data class SettingsData(
     val themeTypography: Typography = Typography.DEFAULT,
     // The per-subject percentage threshold set by the user.
     val attendanceTargetPercentage: Float = 0.75f,
+    // Whether syllabus links have been fetched from database
+    val syllabusFetched: Boolean = false,
 )
 
 object SettingsSerializer : Serializer<SettingsData> {

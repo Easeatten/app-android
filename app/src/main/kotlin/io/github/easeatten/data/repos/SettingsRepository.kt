@@ -36,4 +36,8 @@ class SettingsRepository(private val context: Context) {
             it.copy(attendanceTargetPercentage = value.coerceIn(0.0f, 1.0f))
         }
     }
+
+    suspend fun updateSyllabusFetched(value: Boolean) {
+        context.SettingsDataStore.updateData { it.copy(syllabusFetched = value) }
+    }
 }
