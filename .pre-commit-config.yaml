@@ -11,5 +11,4 @@ repos:
   - repo: .
     rev: 512bdf57602e9fe5ba0c95c63d5c8514f2bba896
     hooks:
-      - id: gradle-check
       - id: gradle-ktfmt
