@@ -1,0 +1,99 @@
+name: Easeatten Android CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  ktfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # JetBrains JDK is required by Gradle project settings.
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: jetbrains
+
+      # Configure Gradle for optimal use in GitHub Actions, including caching
+      # of downloaded dependencies.
+      # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      # Gradle tasks from `com.ncorti.ktfmt.gradle`. Configuration is managed
+      # within the project settings.
+      - run: ./gradlew ktfmtCheck ktfmtCheckScripts
+
+  detekt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # JetBrains JDK is required by Gradle project settings.
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: jetbrains
+
+      # Configure Gradle for optimal use in GitHub Actions, including caching
+      # of downloaded dependencies.
+      # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      # Gradle tasks from `dev.detekt`. Configuration is managed within the
+      # project settings.
+      - run: ./gradlew detekt
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [ "ktfmt", "detekt" ]
+    steps:
+      - uses: actions/checkout@v7
+      - run: git submodule update --init
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/git/db/
+            ~/.cargo/registry/cache/
+            ~/.cargo/registry/index/
+            app/src/main/rust/sxcapi/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('app/src/main/rust/sxcapi/Cargo.lock') }}
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: jetbrains
+
+      # Configure Gradle for optimal use in GitHub Actions, including caching
+      # of downloaded dependencies.
+      # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Setup cargo-binstall for Rust dependencies
+        uses: cargo-bins/cargo-binstall@main
+
+      - name: Setup Rust binary dependencies
+        run: |
+          cargo binstall cargo-ndk # Quick install skipping compilation.
+          cargo install uniffi --features cli --bin uniffi-bindgen
+
+      - name: Setup Rust toolchain
+        run: rustup target add aarch64-linux-android
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Upload Artifact (debug APK)
+        uses: actions/upload-artifact@v7
+        with:
+          name: apk-debug
+          path: app/build/outputs/apk/debug
