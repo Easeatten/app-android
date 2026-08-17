@@ -17,7 +17,6 @@ plug-detekt = "2.0.0-alpha.5"
 plug-google-services = "4.4.3"
 plug-kotlin-compose = "2.4.0"
 plug-kotlin-serialization = "2.4.0"
-plug-google-services = "4.4.3"
 plug-ncorti-ktfmt = "0.26.0"
 
 [libraries]
@@ -47,5 +46,4 @@ detekt = { id = "dev.detekt", version.ref = "plug-detekt" }
 google-services = { id = "com.google.gms.google-services", version.ref = "plug-google-services" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "plug-kotlin-compose" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "plug-kotlin-serialization" }
-google-services = { id = "com.google.gms.google-services", version.ref = "plug-google-services" }
 ncorti-ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "plug-ncorti-ktfmt" }
