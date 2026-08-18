@@ -6,6 +6,7 @@ enum class NavDestination {
     ONBOARDING_LICENSE,
     LOGIN,
     LOGIN_DETAILS,
+    NOTIFICATION_PERMISSION,
     HOME,
     ATTENDANCE;
 
@@ -16,6 +17,7 @@ enum class NavDestination {
             ONBOARDING_LICENSE -> "/onboarding/license"
             LOGIN -> "/login"
             LOGIN_DETAILS -> "/login/details"
+            NOTIFICATION_PERMISSION -> "/notification_permission"
             HOME -> "/home"
             ATTENDANCE -> "/attendance"
         }

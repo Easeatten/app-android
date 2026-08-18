@@ -100,7 +100,9 @@ fun DetailsPage(navController: NavController) {
 
             !state.isLoginInProgress && state.loginFailed == false -> {
                 vm.clearLoginState()
-                navController.navigate(NavDestination.HOME.route()) { popUpTo(0) }
+                navController.navigate(NavDestination.NOTIFICATION_PERMISSION.route()) {
+                    popUpTo(0)
+                }
             }
 
             !state.isLoginInProgress && state.loginFailed == true -> {
