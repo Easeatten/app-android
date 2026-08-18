@@ -8,8 +8,10 @@ import io.github.easeatten.data.sources.AttendanceSerializer
 import io.github.easeatten.data.sources.LoginDataStore
 import io.github.easeatten.data.sources.LoginSerializer
 import io.github.easeatten.data.sources.toAttendanceData
+import io.github.easeatten.database.DatabaseRepository
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -43,6 +45,7 @@ class UserRepository(private val context: Context) {
         roll: UInt,
         semester: UInt,
     ): String? {
+        val settingsData = SettingsRepository(context).settingsFlow.first()
         val department =
             runCatching { enumValueOf<sxcapi.Department>(departmentCode) }
                 .getOrElse {
@@ -52,7 +55,12 @@ class UserRepository(private val context: Context) {
         var message: String? = null
         try {
             context.AttendanceDataStore.updateData {
-                fetchAttendanceDataFromSource(department, year, roll, semester)
+                val data = fetchAttendanceDataFromSource(department, year, roll, semester)
+                if (!settingsData.syllabusFetched) {
+                    querySyllabusLinks(data)
+                    SettingsRepository(context).updateSyllabusFetched(true)
+                }
+                data
             }
 
             context.LoginDataStore.updateData {
@@ -84,6 +92,7 @@ class UserRepository(private val context: Context) {
     }
 
     suspend fun refreshAttendanceData() {
+        val settingsData = SettingsRepository(context).settingsFlow.first()
         val login = loginFlow.stateIn(CoroutineScope(EmptyCoroutineContext)).value
         var data: AttendanceData? = null
 
@@ -128,6 +137,23 @@ class UserRepository(private val context: Context) {
             Log.e(logTag, "Failed to fetch attendance details: ${e.message!!}")
         }
 
-        if (data != null) context.AttendanceDataStore.updateData { data }
+        if (data != null) {
+            if (!settingsData.syllabusFetched) {
+                querySyllabusLinks(data)
+                SettingsRepository(context).updateSyllabusFetched(true)
+            }
+            context.AttendanceDataStore.updateData { data }
+        }
+    }
+
+    // Method to query subject syllabus links from the Database.
+    private suspend fun querySyllabusLinks(data: AttendanceData) {
+        val database = DatabaseRepository<String>("syllabus/links")
+        data.records.forEach { record ->
+            val subject =
+                // The database restricts usage of certain delimiters in the keys.
+                record.subject.map { char -> if (char in ".$#[]/") " " else char }.joinToString("")
+            record.subjectSyllabusLink = database.read(subject.lowercase())
+        }
     }
 }

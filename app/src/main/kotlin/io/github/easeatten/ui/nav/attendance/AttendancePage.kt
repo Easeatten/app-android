@@ -1,6 +1,14 @@
+// The suppression is only done for testing and will be removed before merging to main
+@file:Suppress("TooManyFunctions")
 package io.github.easeatten.ui.nav.attendance
 
 import android.icu.text.DateFormat
+import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,12 +17,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
@@ -29,6 +39,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -39,17 +50,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import iconLaunch
 import io.github.easeatten.data.repos.SettingsRepository
 import io.github.easeatten.data.repos.UserRepository
 import io.github.easeatten.data.sources.AttendanceData
 import io.github.easeatten.data.sources.AttendanceRecord
 import io.github.easeatten.data.sources.SettingsData
+import io.github.easeatten.database.DatabaseRepository
 import io.github.easeatten.ui.common.ContinuousSliderDialogCard
 import io.github.easeatten.ui.common.RadioButtonDialogCard
 import io.github.easeatten.ui.icons.iconArrowBack
@@ -365,15 +379,38 @@ internal fun SubjectScore(modifier: Modifier = Modifier, score: Int) {
     }
 }
 
+// TODO() The suppression is only done for testing and will be removed in augustus/ui-updates branch
+@Suppress("LongMethod")
 @Composable
 internal fun SubjectDialogCard(record: AttendanceRecord, score: Int, cardColors: CardColors) {
+    var showRequestLinkDialog by remember { mutableStateOf(false) }
+    val handler = LocalUriHandler.current
+    val context = LocalContext.current
+    val link = record.subjectSyllabusLink
+
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         colors = cardColors,
         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
-            SubjectSummary(record = record, subjectMaxLines = 3)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                SubjectSummary(modifier = Modifier.weight(1f), record = record, subjectMaxLines = 3)
+                IconButton(
+                    onClick = {
+                        if (link != null) handler.openUri(link) else showRequestLinkDialog = true
+                    }
+                ) {
+                    Icon(
+                        modifier = Modifier.height(20.dp).width(20.dp),
+                        imageVector = iconLaunch,
+                        contentDescription = "Syllabus link",
+                    )
+                }
+            }
 
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 10.dp),
@@ -402,4 +439,45 @@ internal fun SubjectDialogCard(record: AttendanceRecord, score: Int, cardColors:
             }
         }
     }
+
+    AnimatedVisibility(
+        visible = showRequestLinkDialog,
+        enter = fadeIn() + scaleIn(initialScale = 0.8f),
+        exit = fadeOut() + scaleOut(targetScale = 0.8f),
+    ) {
+        RequestLinkDialog(
+            onConfirmation = {
+                showRequestLinkDialog = false
+                val data =
+                    mapOf("User" to "anonymous", "Department" to "", "Subject" to record.subject)
+                val database = DatabaseRepository<ArrayList<String>>("syllabus/requests")
+                database.write(
+                    data,
+                    addOnSuccessListener = {
+                        Toast.makeText(context, "Request sent", Toast.LENGTH_SHORT).show()
+                    },
+                    addOnFailureListener = {
+                        Toast.makeText(context, "Request sending failed", Toast.LENGTH_SHORT).show()
+                    },
+                )
+            },
+            onDismissRequest = { showRequestLinkDialog = false },
+            dialogText = "Request syllabus link for ${record.subject}",
+        )
+    }
+}
+
+@Composable
+private fun RequestLinkDialog(
+    onDismissRequest: () -> Unit,
+    onConfirmation: () -> Unit,
+    dialogText: String,
+) {
+    AlertDialog(
+        title = { Text(text = "Syllabus link not found") },
+        text = { Text(text = dialogText) },
+        onDismissRequest = { onDismissRequest() },
+        confirmButton = { TextButton(onClick = { onConfirmation() }) { Text("Send") } },
+        dismissButton = { TextButton(onClick = { onDismissRequest() }) { Text("Dismiss") } },
+    )
 }
