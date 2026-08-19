@@ -27,7 +27,7 @@ jobs:
 
       # Gradle tasks from `com.ncorti.ktfmt.gradle`. Configuration is managed
       # within the project settings.
-      - run: ./gradlew ktfmtCheck ktfmtCheckScripts
+      - run: ./gradlew ktfmtCi
 
   detekt:
     runs-on: ubuntu-latest
@@ -56,7 +56,9 @@ jobs:
     needs: [ "ktfmt", "detekt" ]
     steps:
       - uses: actions/checkout@v7
-      - run: git submodule update --init
+        with:
+          submodules: recursive
+
       - uses: actions/cache@v6
         with:
           path: |
@@ -64,7 +66,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/registry/index/
             app/src/main/rust/sxcapi/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('app/src/main/rust/sxcapi/Cargo.lock') }}
+          key: ci-${{ runner.os }}-cargo-${{ hashFiles('app/src/main/rust/sxcapi/Cargo.lock') }}
 
       - name: Setup JDK
         uses: actions/setup-java@v5
@@ -78,16 +80,19 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Setup cargo-binstall for Rust dependencies
-        uses: cargo-bins/cargo-binstall@main
-
-      - name: Setup Rust binary dependencies
-        run: |
-          cargo binstall cargo-ndk # Quick install skipping compilation.
-          cargo install uniffi --features cli --bin uniffi-bindgen
-
       - name: Setup Rust toolchain
-        run: rustup target add aarch64-linux-android
+        run: rustup target add armv7-linux-androideabi aarch64-linux-android x86_64-linux-android
+
+      - name: Install Rust crate `cargo-ndk`
+        uses: taiki-e/cache-cargo-install-action@v3
+        with:
+          tool: cargo-ndk
+
+      - name: Install Rust crate `uniffi-bindgen`
+        uses: taiki-e/cache-cargo-install-action@v3
+        with:
+          tool: uniffi
+          features: cli
 
       - name: Build with Gradle
         run: ./gradlew build
