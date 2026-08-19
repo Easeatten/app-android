@@ -27,7 +27,7 @@ jobs:
 
       # Gradle tasks from `com.ncorti.ktfmt.gradle`. Configuration is managed
       # within the project settings.
-      - run: ./gradlew ktfmtCheck ktfmtCheckScripts
+      - run: ./gradlew ktfmtCi
 
   detekt:
     runs-on: ubuntu-latest
