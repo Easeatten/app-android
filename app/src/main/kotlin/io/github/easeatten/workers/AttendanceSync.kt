@@ -12,6 +12,7 @@ import androidx.work.WorkRequest
 import androidx.work.WorkerParameters
 import io.github.easeatten.data.repos.SettingsRepository
 import io.github.easeatten.data.repos.UserRepository
+import io.github.easeatten.notifiers.content.RefreshNotifier
 import java.io.IOException
 import java.time.LocalTime
 import java.util.concurrent.TimeUnit
@@ -75,12 +76,15 @@ class AttendanceSync(val appContext: Context, workerParams: WorkerParameters) :
             Work.request(appContext)
             Log.i(LOGGER, "Successfully scheduled next refresh")
 
+            RefreshNotifier.notifySuccess(applicationContext)
             Result.success()
         } catch (e: IOException) {
             Log.e(LOGGER, "Retry", e)
+            RefreshNotifier.notifyRetryLater(applicationContext)
             Result.retry()
         } catch (e: Exception) {
             Log.e(LOGGER, "Failure", e)
+            RefreshNotifier.notifyFailure(applicationContext)
             Result.failure()
         }
     }

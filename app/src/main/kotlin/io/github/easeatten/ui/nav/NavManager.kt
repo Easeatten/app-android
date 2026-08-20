@@ -24,6 +24,7 @@ import io.github.easeatten.ui.nav.home.HomeScaffold
 import io.github.easeatten.ui.nav.login.DetailsPage
 import io.github.easeatten.ui.nav.onboarding.LandingPage
 import io.github.easeatten.ui.nav.onboarding.LicensePage
+import io.github.easeatten.ui.nav.permission.RequestNotificationPermission
 import io.github.easeatten.ui.viewmodels.SimpleViewModel
 import io.github.easeatten.ui.viewmodels.SimpleViewModelFactory
 import io.github.easeatten.ui.viewmodels.SplashScreenViewModel
@@ -81,6 +82,9 @@ fun NavManager() {
                 startDestination = NavDestination.LOGIN_DETAILS.route(),
             ) {
                 composable(NavDestination.LOGIN_DETAILS.route()) { DetailsPage(navController) }
+            }
+            composable(NavDestination.NOTIFICATION_PERMISSION.route()) {
+                RequestNotificationPermission(navController)
             }
             composable(NavDestination.HOME.route()) { HomeScaffold(navController) }
             composable(NavDestination.ATTENDANCE.route()) { AttendancePage(navController) }
