@@ -21,6 +21,7 @@ import kotlinx.serialization.json.Json
 data class AttendanceRecord(
     val subject: String = "",
     val subjectPractical: Boolean = false,
+    val subjectCode: String = "",
     val attended: UInt = 0u,
     val delivered: UInt = 0u,
     val professors: List<String>,
@@ -65,6 +66,99 @@ data class AttendanceData(
         return records.fold(0.0f) { acc, record -> acc + record.getPercentage() } /
             this.records.size
     }
+
+    fun createSummary(penultimateData: AttendanceData): AttendanceSummary {
+        // Map subject code to corresponding record.
+        val oldData = penultimateData.records.associateBy { it.subjectCode }
+        val newData = records.associateBy { it.subjectCode }
+
+        // Check for change in subjects.
+        val subjectsAdded: (Set<String>) -> Map<AttendanceRecord, UInt> = {
+            it.associate { code -> newData[code] as AttendanceRecord to newData[code]!!.attended }
+        }
+        val subjectsRemoved: (Set<String>) -> Map<AttendanceRecord, UInt> = {
+            it.associate { code -> oldData[code] as AttendanceRecord to newData[code]!!.attended }
+        }
+
+        val missedClassesCount = mutableMapOf<AttendanceRecord, UInt>()
+        val attendedClassesCount = mutableMapOf<AttendanceRecord, UInt>()
+
+        newData.keys.forEach { code ->
+            val newRecord = newData[code]!!
+            // oldData returns null when a new subject is added.
+            // So we skip that iteration when it returns null.
+            val oldRecord = oldData[code] ?: return@forEach
+
+            val deliveredDiff = newRecord.delivered.toInt() - oldRecord.delivered.toInt()
+            val attendedDiff = newRecord.attended.toInt() - oldRecord.attended.toInt()
+
+            // Both delivered and attended class(es) changed by the same amount.
+            if (deliveredDiff == attendedDiff) {
+                // No changes made, continue to the next iteration.
+                if (attendedDiff == 0) return@forEach
+                // If no. of missed classes stored is found to be positive, it
+                // concludes that all classes were attended.
+                else if (attendedDiff > 0) attendedClassesCount[newRecord] = attendedDiff.toUInt()
+                // If no. of missed classes stored is found to be negative, it
+                // concludes that classes were taken back after uploading in the website.
+                else missedClassesCount[newRecord] = attendedDiff.toUInt()
+            }
+
+            // No. of delivered classes was increased or stayed the same:
+            else if (deliveredDiff >= 0) {
+                // and no. of attended classes was decreased or stayed the same.
+                if (attendedDiff <= 0)
+                    missedClassesCount[newRecord] = (deliveredDiff - attendedDiff).toUInt()
+                // and no. of class(es) attended was also increased.
+                else
+                    attendedClassesCount[newRecord] =
+                        (attendedDiff -
+                                (
+                                // Special case where student was granted
+                                // extra no. of attended class(es).
+                                if (attendedDiff > deliveredDiff) deliveredDiff
+                                else
+                                    0.also {
+                                        // Get no. of class(es) missed.
+                                        // Unexpected extra no. of delivered class(es) also gets
+                                        // added up.
+                                        missedClassesCount[newRecord] =
+                                            (deliveredDiff - attendedDiff).toUInt()
+                                    }))
+                            .toUInt()
+            }
+
+            // No. of delivered classes was decreased:
+            else {
+                // and no. of attended classes was increased or stayed the same.
+                if (attendedDiff >= 0)
+                    attendedClassesCount[newRecord] = (attendedDiff - deliveredDiff).toUInt()
+                // and no. of attended classes was also decreased.
+                else
+                    missedClassesCount[newRecord] =
+                        (-attendedDiff +
+                                (if (attendedDiff < deliveredDiff) deliveredDiff
+                                else
+                                    0.also {
+                                        // Get no. of class(es) attended.
+                                        // Unexpected extra no. of attended class(es) also gets
+                                        // added up.
+                                        attendedClassesCount[newRecord] =
+                                            (attendedDiff - deliveredDiff).toUInt()
+                                    }))
+                            .toUInt()
+            }
+        }
+
+        return AttendanceSummary(
+            subjectsAdded = subjectsAdded(newData.keys - oldData.keys),
+            subjectsRemoved = subjectsRemoved(oldData.keys - newData.keys),
+            missedClasses = missedClassesCount,
+            attendedClasses = attendedClassesCount,
+            attendedAll = missedClassesCount.isEmpty(),
+            missedAll = attendedClassesCount.isEmpty(),
+        )
+    }
 }
 
 fun sxcapi.AttendanceData.toAttendanceData(): AttendanceData =
@@ -79,6 +173,7 @@ fun sxcapi.AttendanceData.toAttendanceData(): AttendanceData =
                 AttendanceRecord(
                     subject = it.name ?: it.code ?: "Unknown",
                     subjectPractical = it.code?.endsWith("P") ?: false,
+                    subjectCode = it.code ?: "Unknown",
                     attended = it.records.sumOf { record -> record.attended },
                     delivered = it.records.sumOf { record -> record.delivered },
                     professors = it.records.mapNotNull { record -> record.professor },
