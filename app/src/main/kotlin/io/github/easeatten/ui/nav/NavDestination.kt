@@ -7,7 +7,8 @@ enum class NavDestination {
     LOGIN,
     LOGIN_DETAILS,
     HOME,
-    ATTENDANCE;
+    ATTENDANCE,
+    ATTENDANCE_HISTORY;
 
     fun route(): String =
         when (this) {
@@ -18,5 +19,6 @@ enum class NavDestination {
             LOGIN_DETAILS -> "/login/details"
             HOME -> "/home"
             ATTENDANCE -> "/attendance"
+            ATTENDANCE_HISTORY -> "/attendance/history"
         }
 }
