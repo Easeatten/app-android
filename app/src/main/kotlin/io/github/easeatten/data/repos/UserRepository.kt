@@ -4,12 +4,19 @@ import android.content.Context
 import android.util.Log
 import io.github.easeatten.data.sources.AttendanceData
 import io.github.easeatten.data.sources.AttendanceDataStore
+import io.github.easeatten.data.sources.AttendanceLog
+import io.github.easeatten.data.sources.AttendanceLogStore
+import io.github.easeatten.data.sources.AttendanceLogsSerializer
 import io.github.easeatten.data.sources.AttendanceSerializer
 import io.github.easeatten.data.sources.LoginDataStore
 import io.github.easeatten.data.sources.LoginSerializer
 import io.github.easeatten.data.sources.toAttendanceData
+import java.text.SimpleDateFormat
+import java.util.Locale
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -25,6 +32,7 @@ class UserRepository(private val context: Context) {
 
     val loginFlow = context.LoginDataStore.data
     val attendanceFlow = context.AttendanceDataStore.data
+    val attendanceLogsFlow = context.AttendanceLogStore.data
 
     private suspend fun fetchAttendanceDataFromSource(
         department: sxcapi.Department,
@@ -51,9 +59,10 @@ class UserRepository(private val context: Context) {
 
         var message: String? = null
         try {
-            context.AttendanceDataStore.updateData {
-                fetchAttendanceDataFromSource(department, year, roll, semester)
-            }
+            val data = fetchAttendanceDataFromSource(department, year, roll, semester)
+
+            context.AttendanceDataStore.updateData { data }
+            context.AttendanceLogStore.updateData { it.copy(penultimateData = data) }
 
             context.LoginDataStore.updateData {
                 it.copy(
@@ -80,6 +89,7 @@ class UserRepository(private val context: Context) {
 
     suspend fun unregisterUser() {
         context.AttendanceDataStore.updateData { AttendanceSerializer.defaultValue }
+        context.AttendanceLogStore.updateData { AttendanceLogsSerializer.defaultValue }
         context.LoginDataStore.updateData { LoginSerializer.defaultValue }
     }
 
@@ -128,6 +138,39 @@ class UserRepository(private val context: Context) {
             Log.e(logTag, "Failed to fetch attendance details: ${e.message!!}")
         }
 
-        if (data != null) context.AttendanceDataStore.updateData { data }
+        if (data != null) {
+            context.AttendanceDataStore.updateData { data }
+            // Using the default formatter of LocalDate.format(), for convenience while parsing.
+            val date =
+                SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
+                    .format(data.getLastUpdatedDate().time)
+            val penultimateData = context.AttendanceLogStore.data.map { it.penultimateData }.first()
+            val map = context.AttendanceLogStore.data.map { it.summary }.first()
+
+            val dataAlreadyExists: Boolean = map.contains(date)
+            val summaryData = data.createSummary(penultimateData)
+            val hasUpdates =
+                summaryData.attendedClasses.isNotEmpty() ||
+                    summaryData.missedClasses.isNotEmpty() ||
+                    summaryData.subjectsRemoved.isNotEmpty() ||
+                    summaryData.subjectsAdded.isNotEmpty()
+
+            // Only save log if attendance data is updated,
+            // i.e. when the student has either attended or missed at least one class, or the
+            // subjects were updated.
+            if (hasUpdates) {
+
+                map[date] = summaryData
+                context.AttendanceLogStore.updateData {
+                    AttendanceLog(
+                        // Do not change penultimate AttendanceData while updating the already
+                        // existing log.
+                        penultimateData = if (dataAlreadyExists) penultimateData else data,
+                        // Data is overwritten if dataAlreadyExists is true.
+                        summary = map,
+                    )
+                }
+            }
+        }
     }
 }
