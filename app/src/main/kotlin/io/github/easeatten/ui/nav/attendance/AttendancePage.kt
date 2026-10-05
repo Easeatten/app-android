@@ -58,6 +58,7 @@ import io.github.easeatten.ui.icons.iconCalendarMonth
 import io.github.easeatten.ui.icons.iconExperiment
 import io.github.easeatten.ui.icons.iconSort
 import io.github.easeatten.ui.icons.iconTarget
+import io.github.easeatten.ui.nav.NavDestination
 import io.github.easeatten.ui.viewmodels.nav.AttendanceState
 import io.github.easeatten.ui.viewmodels.nav.AttendanceStateFilter
 import io.github.easeatten.ui.viewmodels.nav.AttendanceStateOrdering
@@ -84,7 +85,7 @@ fun AttendancePage(navController: NavController) {
     Scaffold(topBar = { TopBar(navController) }) { padding ->
         if (attendance.valid) {
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-                ChipRow(vm, state, settings, attendance)
+                ChipRow(vm, state, settings, attendance, navController)
                 SubjectList(vm, state, settings, attendance)
             }
         }
@@ -110,11 +111,12 @@ internal fun ChipRow(
     state: AttendanceState,
     settings: SettingsData,
     attendance: AttendanceData,
+    navController: NavController,
 ) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
         item { Spacer(modifier = Modifier.padding(horizontal = 7.5.dp)) }
 
-        item { DateAssistChip(attendance) }
+        item { DateAssistChip(navController, attendance) }
         item { TargetAssistChip(vm, state, settings) }
         item { OrderingAssistChip(vm, state) }
 
@@ -140,7 +142,7 @@ internal fun ChipRow(
 }
 
 @Composable
-internal fun DateAssistChip(attendance: AttendanceData) {
+internal fun DateAssistChip(navController: NavController, attendance: AttendanceData) {
     val context = LocalContext.current.applicationContext
     val dateCal = attendance.getLastUpdatedDate()
     val dateDisplay = DateFormat.getDateInstance(DateFormat.SHORT).format(dateCal)
@@ -154,7 +156,7 @@ internal fun DateAssistChip(attendance: AttendanceData) {
                 contentDescription = "Date",
             )
         },
-        onClick = {},
+        onClick = { navController.navigate(NavDestination.ATTENDANCE_HISTORY.route()) },
     )
 }
 
