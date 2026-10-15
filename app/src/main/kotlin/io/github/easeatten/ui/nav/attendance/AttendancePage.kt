@@ -329,7 +329,7 @@ internal fun SubjectSummary(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val percentageDisplay = (record.getPercentage() * 1000).roundToInt() / 10.0
+            val percentageDisplay = (record.getPercentage() * 10000).roundToInt() / 100.0
 
             if (record.subjectPractical) {
                 Icon(
