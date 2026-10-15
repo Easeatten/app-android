@@ -2,6 +2,7 @@ package io.github.easeatten.ui.nav.attendance
 
 import android.icu.text.DateFormat
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
@@ -301,7 +303,7 @@ internal fun SubjectListItem(modifier: Modifier = Modifier, record: AttendanceRe
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            SubjectSummary(Modifier.fillMaxHeight().weight(1f), record)
+            SubjectSummary(Modifier.fillMaxHeight().weight(1f), record, displayPercentage = true)
             SubjectScore(Modifier.fillMaxHeight().width(60.dp), score)
         }
     }
@@ -316,6 +318,8 @@ internal fun SubjectSummary(
     modifier: Modifier = Modifier,
     record: AttendanceRecord,
     subjectMaxLines: Int = 1,
+    displayPercentage: Boolean = false,
+    displayTeachers: Boolean = false,
 ) {
     Column(modifier = modifier) {
         Text(
@@ -333,20 +337,31 @@ internal fun SubjectSummary(
 
             if (record.subjectPractical) {
                 Icon(
-                    modifier = Modifier.size(15.dp),
+                    modifier = Modifier.size(18.dp),
                     imageVector = iconExperiment,
                     contentDescription = "Practical",
                 )
             } else {
                 Icon(
-                    modifier = Modifier.size(15.dp),
+                    modifier = Modifier.size(18.dp),
                     imageVector = iconAssignment,
                     contentDescription = "Theory",
                 )
             }
 
-            Text(text = "⋅", style = MaterialTheme.typography.labelLarge)
-            Text(text = "$percentageDisplay%", style = MaterialTheme.typography.labelLarge)
+            if (displayPercentage) {
+                Text(text = "⋅", style = MaterialTheme.typography.labelLarge)
+                Text(text = "$percentageDisplay%", style = MaterialTheme.typography.labelLarge)
+            }
+            if (displayTeachers) {
+                val scrollState = rememberScrollState()
+                Row(modifier = Modifier.horizontalScroll(scrollState)) {
+                    record.professors.forEach { professor ->
+                        Text(text = " • ", style = MaterialTheme.typography.labelLarge)
+                        Text(text = professor, style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+            }
         }
     }
 }
@@ -358,7 +373,7 @@ internal fun SubjectScore(modifier: Modifier = Modifier, score: Int) {
 
         // Apply an arbitrary threshold to prevent abnormally large numbers from being displayed.
         val absoluteScoreDisplay =
-            if (score <= -1000 || score >= 1000) "∞" else score.absoluteValue.toString()
+            if (score <= -100 || score >= 100) "∞" else score.absoluteValue.toString()
 
         Text(text = absoluteScoreDisplay, style = MaterialTheme.typography.titleLarge)
         Text(text = statusText, style = MaterialTheme.typography.labelLarge)
@@ -373,7 +388,7 @@ internal fun SubjectDialogCard(record: AttendanceRecord, score: Int, cardColors:
         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
-            SubjectSummary(record = record, subjectMaxLines = 3)
+            SubjectSummary(record = record, subjectMaxLines = 3, displayTeachers = true)
 
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 10.dp),
