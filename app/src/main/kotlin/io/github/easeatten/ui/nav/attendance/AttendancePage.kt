@@ -1,9 +1,15 @@
 package io.github.easeatten.ui.nav.attendance
 
 import android.icu.text.DateFormat
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +28,7 @@ import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -34,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,10 +75,15 @@ import io.github.easeatten.ui.viewmodels.nav.AttendanceViewModel
 import io.github.easeatten.ui.viewmodels.nav.AttendanceViewModelFactory
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.delay
+
+private const val ANIMATION_DURATION = 300
 
 @Composable
 fun AttendancePage(navController: NavController) {
     val context = LocalContext.current.applicationContext
+    var isLoading by remember { mutableStateOf(true) }
 
     // Data Repositories
     val settingsRepository = remember { SettingsRepository(context) }
@@ -83,11 +96,30 @@ fun AttendancePage(navController: NavController) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val attendance by vm.attendance.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit) {
+        // Add delay to hide lag during navigation.
+        delay(500.milliseconds)
+        isLoading = false
+    }
+
     Scaffold(topBar = { TopBar(navController) }) { padding ->
-        if (attendance.valid) {
-            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-                ChipRow(vm, state, settings, attendance)
-                SubjectList(vm, state, settings, attendance)
+        AnimatedContent(
+            targetState = isLoading,
+            label = "LoadingTransition",
+            transitionSpec = {
+                fadeIn(animationSpec = tween(ANIMATION_DURATION)) togetherWith
+                    fadeOut(animationSpec = tween(ANIMATION_DURATION))
+            },
+        ) { isLoaded ->
+            if (isLoaded || !attendance.valid)
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            else {
+                Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                    ChipRow(vm, state, settings, attendance)
+                    SubjectList(vm, state, settings, attendance)
+                }
             }
         }
     }
