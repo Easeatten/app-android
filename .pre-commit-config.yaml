@@ -14,3 +14,11 @@ repos:
     hooks:
       - id: gradle-ktfmt
         always_run: true
+  - repo: local
+    hooks:
+      - id: detekt
+        name: Detekt
+        entry: ./gradlew detekt
+        language: system
+        pass_filenames: false
+        always_run: true
