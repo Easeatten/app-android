@@ -56,7 +56,6 @@ fun DetailsPage(navController: NavController) {
     val vm: LoginViewModel = viewModel(factory = vmFactory)
 
     val state by vm.state.collectAsStateWithLifecycle()
-    val login by vm.login.collectAsStateWithLifecycle()
 
     Box(modifier = Modifier.fillMaxSize().padding(20.dp)) {
         val snackbarHostState = remember { SnackbarHostState() }
