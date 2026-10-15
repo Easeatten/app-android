@@ -7,8 +7,10 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+        always_run: true
       - id: check-added-large-files
   - repo: .
     rev: d34fdb7910eb6c1fb784b8f0abd2c20b3a719481
     hooks:
       - id: gradle-ktfmt
+        always_run: true
