@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -55,15 +56,11 @@ fun DetailsPage(navController: NavController) {
     val vm: LoginViewModel = viewModel(factory = vmFactory)
 
     val state by vm.state.collectAsStateWithLifecycle()
-    val login by vm.login.collectAsStateWithLifecycle()
 
     Box(modifier = Modifier.fillMaxSize().padding(20.dp)) {
         val snackbarHostState = remember { SnackbarHostState() }
 
-        Scaffold(
-            bottomBar = { BottomBar(vm, state) },
-            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        ) {
+        Scaffold(snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) {
             Box(modifier = Modifier.fillMaxSize().padding(it)) {
                 Column(
                     modifier =
@@ -87,6 +84,9 @@ fun DetailsPage(navController: NavController) {
                         BatchYearTextField(vm, state, modifier)
                         SemesterTextField(vm, state, modifier)
                     }
+
+                    Spacer(Modifier.height(50.dp))
+                    Row(Modifier.fillMaxWidth()) { LoginButton(vm, state) }
                 }
             }
         }
@@ -116,7 +116,7 @@ fun DetailsPage(navController: NavController) {
 }
 
 @Composable
-internal fun BottomBar(vm: LoginViewModel, state: LoginState) {
+internal fun LoginButton(vm: LoginViewModel, state: LoginState) {
     BottomAppBar(containerColor = MaterialTheme.colorScheme.surface) {
         Row(
             modifier = Modifier.fillMaxWidth(),
