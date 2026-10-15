@@ -175,7 +175,6 @@ internal fun ChipRow(
 
 @Composable
 internal fun DateAssistChip(attendance: AttendanceData) {
-    val context = LocalContext.current.applicationContext
     val dateCal = attendance.getLastUpdatedDate()
     val dateDisplay = DateFormat.getDateInstance(DateFormat.SHORT).format(dateCal)
 
