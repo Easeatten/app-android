@@ -1,29 +1,56 @@
+@file:Suppress("TooManyFunctions")
+
 package io.github.easeatten.ui.nav.home
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
+import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkManager
@@ -71,6 +98,7 @@ fun HomePageSettings(
             // Behavioural configurations.
             item { SectionText(sectionModifier, "Background & sync") }
             item { AutoRefreshSwitch(vm, settings, itemModifier) }
+            item { BatteryOptimizationRequest(vm, settings) }
 
             item { LogoutButton(navController, vm, itemModifier) }
         }
@@ -296,6 +324,143 @@ internal fun AutoRefreshSwitch(
         // Doing this before the if-else block could give unexpected results,
         // as the update function does not block the thread.
         vm.updateAutoRefreshPreference(!settings.autoRefreshAttendance)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun BatteryOptimizationRequest(vm: HomeViewModel, setting: SettingsData) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val state by vm.state.collectAsStateWithLifecycle()
+
+    val sheetState = rememberModalBottomSheetState()
+    var showBottomSheet by remember { mutableStateOf(setting.autoRefreshAttendance) }
+    var isExpanded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(setting.autoRefreshAttendance) {
+        showBottomSheet = setting.autoRefreshAttendance
+    }
+
+    // The purpose of using DisposableEffect is to avoid recreation of new lifecycle observer on
+    // recomposition,
+    // and removal of the observer on the disposal of composition.
+    DisposableEffect(lifecycleOwner, context) {
+        val observer = LifecycleEventObserver { _, event ->
+            // Only show button after the user resumes activity.
+            if (event == Lifecycle.Event.ON_RESUME) {
+                vm.updateBatteryOptimizationsSettings(context)
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    if (state.isIgnoringBatteryOptimization)
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            Button(
+                onClick = {
+                    context.startActivity(
+                        Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                    )
+                }
+            ) {
+                Text("Turn on battery optimization")
+            }
+        }
+    else if (showBottomSheet)
+        ModalBottomSheet(onDismissRequest = { showBottomSheet = false }, sheetState = sheetState) {
+            Column(modifier = Modifier.padding(10.dp)) {
+                ModalSheetContent(context, isExpanded) { isExpanded = !isExpanded }
+            }
+        }
+}
+
+@Composable
+private fun ModalSheetContent(context: Context, isExpanded: Boolean, toggle: () -> Unit) {
+    val expandCollapseText = if (!isExpanded) "Understand why" else "Show less"
+
+    Text("ACTION NEEDED", style = MaterialTheme.typography.titleLarge, letterSpacing = 0.5.sp)
+    Spacer(Modifier.height(10.dp))
+
+    Text(
+        buildAnnotatedString {
+            append("Allow Easeatten to ")
+            pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
+            append("Ignore Battery Optimization.\n")
+            pop()
+            append("This is highly recommended to auto-sync attendance in the background.")
+        }
+    )
+
+    if (isExpanded) {
+        Spacer(Modifier.height(10.dp))
+        Box(
+            modifier =
+                Modifier.clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+        ) {
+            Column(modifier = Modifier.padding(8.dp)) {
+                Text(
+                    textAlign = TextAlign.Start,
+                    text =
+                        buildAnnotatedString {
+                            pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
+                            append("Power Saving Mode ")
+                            pop()
+                            append("or ")
+                            pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
+                            append("Data Saver ")
+                            pop()
+                            append(
+                                "restricts background activity or network access, " +
+                                    "preventing Easeatten from syncing attendance automatically " +
+                                    "in the background."
+                            )
+                            append(
+                                " To keep attendance history up to date allowing the app to" +
+                                    " ignore battery optimization is highly recommended."
+                            )
+                        },
+                )
+            }
+        }
+    }
+    Spacer(Modifier.height(8.dp))
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Absolute.Right) {
+        Text(
+            modifier = Modifier.clickable(onClick = toggle),
+            text = expandCollapseText,
+            color = MaterialTheme.colorScheme.tertiary,
+            style = MaterialTheme.typography.labelMedium,
+        )
+    }
+
+    Spacer(Modifier.height(10.dp))
+    RequestOptimizationButton(context)
+}
+
+@Composable
+private fun RequestOptimizationButton(context: Context) {
+    Button(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = {
+            try {
+                context.startActivity(
+                    Intent(
+                        Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                        "package:${context.packageName}".toUri(),
+                    )
+                )
+            } catch (e: ActivityNotFoundException) {
+                Log.e("Activity", "Activity not found:$e")
+                context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+            }
+        },
+    ) {
+        Text("Allow")
     }
 }
 
