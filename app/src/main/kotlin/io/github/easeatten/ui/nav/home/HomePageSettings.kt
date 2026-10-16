@@ -20,10 +20,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import androidx.work.ExistingWorkPolicy
+import androidx.work.WorkManager
 import io.github.easeatten.data.sources.AttendanceData
 import io.github.easeatten.data.sources.LoginData
 import io.github.easeatten.data.sources.SettingsData
@@ -35,6 +38,7 @@ import io.github.easeatten.ui.theme.colorscheme.isDynamicColorSupported
 import io.github.easeatten.ui.theme.typography.Typography
 import io.github.easeatten.ui.viewmodels.nav.HomeState
 import io.github.easeatten.ui.viewmodels.nav.HomeViewModel
+import io.github.easeatten.workers.AttendanceSync
 
 @Composable
 @Suppress("UnusedParameter") // Parameters are as per Composable in [`HomeDestination`]
@@ -58,11 +62,15 @@ fun HomePageSettings(
             val sectionModifier = Modifier.padding(horizontal = 20.dp)
             val itemModifier = Modifier.padding(horizontal = 20.dp, vertical = 15.dp)
 
+            // Appearance configurations.
             item { SectionText(sectionModifier, "Appearance") }
             item { ColorSchemeOption(vm, settings, itemModifier) }
             item { DarkModeOption(vm, settings, itemModifier) }
             item { DynamicColorSwitch(vm, settings, itemModifier) }
             item { TypographyOption(vm, settings, itemModifier) }
+            // Behavioural configurations.
+            item { SectionText(sectionModifier, "Background & sync") }
+            item { AutoRefreshSwitch(vm, settings, itemModifier) }
 
             item { LogoutButton(navController, vm, itemModifier) }
         }
@@ -254,6 +262,34 @@ internal fun TypographyOption(
         selected = settings.themeTypography,
     ) {
         vm.updateTypography(it)
+    }
+}
+
+@Composable
+internal fun AutoRefreshSwitch(
+    vm: HomeViewModel,
+    settings: SettingsData,
+    modifier: Modifier = Modifier,
+) {
+    val applicationContext = LocalContext.current.applicationContext
+    SettingsSwitch(
+        modifier = modifier,
+        text = "Auto Refresh",
+        subtext = "Auto refresh at 00:00 daily",
+        checked = settings.autoRefreshAttendance,
+    ) {
+        // If auto refresh was off, start the first work.
+        if (!settings.autoRefreshAttendance) {
+            val workReq = AttendanceSync.Work.request()
+            WorkManager.getInstance(applicationContext)
+                .enqueueUniqueWork(AttendanceSync.WORK_TAG, ExistingWorkPolicy.KEEP, workReq)
+        }
+        // Else cancel work(s), if any.
+        else WorkManager.getInstance(applicationContext).cancelAllWorkByTag(AttendanceSync.WORK_TAG)
+        // Then update in the settings.
+        // Doing this before the if-else block could give unexpected results,
+        // as the update function does not block the thread.
+        vm.updateAutoRefreshPreference(!settings.autoRefreshAttendance)
     }
 }
 
