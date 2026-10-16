@@ -31,6 +31,8 @@ data class SettingsData(
     val themeTypography: Typography = Typography.DEFAULT,
     // The per-subject percentage threshold set by the user.
     val attendanceTargetPercentage: Float = 0.75f,
+    // Whether auto-refresh is enabled.
+    val autoRefreshAttendance: Boolean = false,
 )
 
 object SettingsSerializer : Serializer<SettingsData> {
