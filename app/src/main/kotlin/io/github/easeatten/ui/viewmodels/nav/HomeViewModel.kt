@@ -68,6 +68,10 @@ class HomeViewModel(
         viewModelScope.launch { settingsRepository.updateThemeTypography(typography) }
     }
 
+    fun updateAutoRefreshPreference(value: Boolean) {
+        viewModelScope.launch { settingsRepository.updateAutoRefreshPreference(value) }
+    }
+
     fun logout() {
         viewModelScope.launch { userRepository.unregisterUser() }
     }
