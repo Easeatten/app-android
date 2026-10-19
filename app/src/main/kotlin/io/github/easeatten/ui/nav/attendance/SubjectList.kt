@@ -1,5 +1,12 @@
 package io.github.easeatten.ui.nav.attendance
 
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
@@ -23,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,13 +41,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import io.github.easeatten.data.sources.AttendanceData
 import io.github.easeatten.data.sources.AttendanceRecord
+import io.github.easeatten.data.sources.LoginDataStore
 import io.github.easeatten.data.sources.SettingsData
+import io.github.easeatten.database.DatabaseRepository
 import io.github.easeatten.ui.icons.iconAssignment
 import io.github.easeatten.ui.icons.iconExperiment
 import io.github.easeatten.ui.icons.iconOpenInBrowser
@@ -49,9 +65,8 @@ import io.github.easeatten.ui.viewmodels.nav.AttendanceViewModel
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlin.coroutines.coroutineContext
 
 @Composable
 internal fun SubjectList(
@@ -251,8 +266,11 @@ internal fun SubjectDialogCard(record: AttendanceRecord, score: Int, cardColors:
 
 @Composable
 private fun LaunchLinkIcon(record: AttendanceRecord) {
+    val context = LocalContext.current
     val handler = LocalUriHandler.current
     val scope = rememberCoroutineScope()
+
+    var showRequestLinkDialog by remember { mutableStateOf(false) }
 
     IconButton(
         onClick = {
@@ -260,6 +278,7 @@ private fun LaunchLinkIcon(record: AttendanceRecord) {
                 val linkString = record.getSyllabusLink()
 
                 if (linkString != null) handler.openUri(linkString)
+                else showRequestLinkDialog = true
             }
         }
     ) {
@@ -269,4 +288,71 @@ private fun LaunchLinkIcon(record: AttendanceRecord) {
             contentDescription = "Syllabus link",
         )
     }
+
+    AnimatedVisibility(
+        visible = showRequestLinkDialog,
+        enter = fadeIn() + scaleIn(initialScale = 0.8f),
+        exit = fadeOut() + scaleOut(targetScale = 0.8f),
+    ) {
+        RequestLinkDialog(context, scope, record.subject) { showRequestLinkDialog = false }
+    }
+}
+
+@Composable
+private fun RequestLinkDialog(
+    context: Context,
+    scope: CoroutineScope,
+    subject: String,
+    dismiss: () -> Unit,
+) {
+    AlertDialog(
+        title = { Text(text = "Syllabus not found") },
+        text = {
+            Text(
+                buildAnnotatedString {
+                    append("Request syllabus for ")
+                    pushStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = 12.sp))
+                    append(subject)
+                    pop()
+                    append(" ?")
+                }
+            )
+        },
+        onDismissRequest = { dismiss() },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    scope.launch {
+                        val loginData = context.LoginDataStore.data.first()
+
+                        val data =
+                            mapOf(
+                                "Department" to loginData.departmentCode,
+                                "Semester" to loginData.semester.toString(),
+                                "Subject" to subject,
+                            )
+                        val database = DatabaseRepository<Any>("syllabus/requests")
+                        database.write(
+                            data,
+                            addOnSuccessListener = {
+                                Toast.makeText(context, "Request sent", Toast.LENGTH_SHORT).show()
+                            },
+                            addOnFailureListener = {
+                                Toast.makeText(
+                                        context,
+                                        "Request sending failed",
+                                        Toast.LENGTH_SHORT,
+                                    )
+                                    .show()
+                            },
+                        )
+                    }
+                    dismiss()
+                }
+            ) {
+                Text("Send")
+            }
+        },
+        dismissButton = { TextButton(onClick = { dismiss() }) { Text("Dismiss") } },
+    )
 }
