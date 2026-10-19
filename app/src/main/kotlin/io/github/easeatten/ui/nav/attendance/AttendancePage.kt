@@ -1,8 +1,15 @@
 package io.github.easeatten.ui.nav.attendance
 
 import android.icu.text.DateFormat
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,11 +22,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -32,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,10 +75,15 @@ import io.github.easeatten.ui.viewmodels.nav.AttendanceViewModel
 import io.github.easeatten.ui.viewmodels.nav.AttendanceViewModelFactory
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.delay
+
+private const val ANIMATION_DURATION = 300
 
 @Composable
 fun AttendancePage(navController: NavController) {
     val context = LocalContext.current.applicationContext
+    var isLoading by remember { mutableStateOf(true) }
 
     // Data Repositories
     val settingsRepository = remember { SettingsRepository(context) }
@@ -81,11 +96,30 @@ fun AttendancePage(navController: NavController) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val attendance by vm.attendance.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit) {
+        // Add delay to hide lag during navigation.
+        delay(500.milliseconds)
+        isLoading = false
+    }
+
     Scaffold(topBar = { TopBar(navController) }) { padding ->
-        if (attendance.valid) {
-            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-                ChipRow(vm, state, settings, attendance)
-                SubjectList(vm, state, settings, attendance)
+        AnimatedContent(
+            targetState = isLoading,
+            label = "LoadingTransition",
+            transitionSpec = {
+                fadeIn(animationSpec = tween(ANIMATION_DURATION)) togetherWith
+                    fadeOut(animationSpec = tween(ANIMATION_DURATION))
+            },
+        ) { isLoaded ->
+            if (isLoaded || !attendance.valid)
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            else {
+                Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                    ChipRow(vm, state, settings, attendance)
+                    SubjectList(vm, state, settings, attendance)
+                }
             }
         }
     }
@@ -141,7 +175,6 @@ internal fun ChipRow(
 
 @Composable
 internal fun DateAssistChip(attendance: AttendanceData) {
-    val context = LocalContext.current.applicationContext
     val dateCal = attendance.getLastUpdatedDate()
     val dateDisplay = DateFormat.getDateInstance(DateFormat.SHORT).format(dateCal)
 
@@ -301,7 +334,7 @@ internal fun SubjectListItem(modifier: Modifier = Modifier, record: AttendanceRe
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            SubjectSummary(Modifier.fillMaxHeight().weight(1f), record)
+            SubjectSummary(Modifier.fillMaxHeight().weight(1f), record, displayPercentage = true)
             SubjectScore(Modifier.fillMaxHeight().width(60.dp), score)
         }
     }
@@ -316,6 +349,8 @@ internal fun SubjectSummary(
     modifier: Modifier = Modifier,
     record: AttendanceRecord,
     subjectMaxLines: Int = 1,
+    displayPercentage: Boolean = false,
+    displayTeachers: Boolean = false,
 ) {
     Column(modifier = modifier) {
         Text(
@@ -329,24 +364,35 @@ internal fun SubjectSummary(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val percentageDisplay = (record.getPercentage() * 1000).roundToInt() / 10.0
+            val percentageDisplay = (record.getPercentage() * 10000).roundToInt() / 100.0
 
             if (record.subjectPractical) {
                 Icon(
-                    modifier = Modifier.size(15.dp),
+                    modifier = Modifier.size(18.dp),
                     imageVector = iconExperiment,
                     contentDescription = "Practical",
                 )
             } else {
                 Icon(
-                    modifier = Modifier.size(15.dp),
+                    modifier = Modifier.size(18.dp),
                     imageVector = iconAssignment,
                     contentDescription = "Theory",
                 )
             }
 
-            Text(text = "⋅", style = MaterialTheme.typography.labelLarge)
-            Text(text = "$percentageDisplay%", style = MaterialTheme.typography.labelLarge)
+            if (displayPercentage) {
+                Text(text = "⋅", style = MaterialTheme.typography.labelLarge)
+                Text(text = "$percentageDisplay%", style = MaterialTheme.typography.labelLarge)
+            }
+            if (displayTeachers) {
+                val scrollState = rememberScrollState()
+                Row(modifier = Modifier.horizontalScroll(scrollState)) {
+                    record.professors.forEach { professor ->
+                        Text(text = " • ", style = MaterialTheme.typography.labelLarge)
+                        Text(text = professor, style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+            }
         }
     }
 }
@@ -358,7 +404,7 @@ internal fun SubjectScore(modifier: Modifier = Modifier, score: Int) {
 
         // Apply an arbitrary threshold to prevent abnormally large numbers from being displayed.
         val absoluteScoreDisplay =
-            if (score <= -1000 || score >= 1000) "∞" else score.absoluteValue.toString()
+            if (score <= -100 || score >= 100) "∞" else score.absoluteValue.toString()
 
         Text(text = absoluteScoreDisplay, style = MaterialTheme.typography.titleLarge)
         Text(text = statusText, style = MaterialTheme.typography.labelLarge)
@@ -373,7 +419,7 @@ internal fun SubjectDialogCard(record: AttendanceRecord, score: Int, cardColors:
         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
-            SubjectSummary(record = record, subjectMaxLines = 3)
+            SubjectSummary(record = record, subjectMaxLines = 3, displayTeachers = true)
 
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 10.dp),

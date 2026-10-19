@@ -36,6 +36,7 @@ androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "l
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "lib-navigation-compose" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "lib-andoidx-work-runtime-ktx" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "lib-firebase-bom" }
+firebase-database = { group = "com.google.firebase", name = "firebase-database" }
 jna = { group = "net.java.dev.jna", name = "jna", version.ref = "lib-jna" }
 junit = { group = "junit", name = "junit", version.ref = "lib-junit" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "lib-serialization-json" }
