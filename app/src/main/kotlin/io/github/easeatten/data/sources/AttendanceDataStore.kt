@@ -7,6 +7,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStore
+import io.github.easeatten.database.DatabaseRepository
 import java.io.InputStream
 import java.io.OutputStream
 import kotlin.math.ceil
@@ -37,6 +38,19 @@ data class AttendanceRecord(
                 -ceil((target * this.delivered.toInt() - attended.toInt()) / (1.0f - target))
             }
             .toInt()
+    }
+
+    suspend fun getSyllabusLink(): String? {
+        val database = DatabaseRepository<String>("syllabus/links")
+
+        val subjectKey =
+            this.subject
+                // The database cannot contain certain delimiters in the key.
+                .map { char -> if (char in ".$#[]/") " " else char }
+                .joinToString("")
+        val linkString = database.read(subjectKey.lowercase())
+
+        return linkString
     }
 }
 

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,6 +20,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -26,9 +28,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -37,12 +41,17 @@ import io.github.easeatten.data.sources.AttendanceRecord
 import io.github.easeatten.data.sources.SettingsData
 import io.github.easeatten.ui.icons.iconAssignment
 import io.github.easeatten.ui.icons.iconExperiment
+import io.github.easeatten.ui.icons.iconOpenInBrowser
 import io.github.easeatten.ui.viewmodels.nav.AttendanceState
 import io.github.easeatten.ui.viewmodels.nav.AttendanceStateFilter
 import io.github.easeatten.ui.viewmodels.nav.AttendanceStateOrdering
 import io.github.easeatten.ui.viewmodels.nav.AttendanceViewModel
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlin.coroutines.coroutineContext
 
 @Composable
 internal fun SubjectList(
@@ -198,7 +207,18 @@ internal fun SubjectDialogCard(record: AttendanceRecord, score: Int, cardColors:
         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
-            SubjectSummary(record = record, subjectMaxLines = 3, displayTeachers = true)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                SubjectSummary(
+                    modifier = Modifier.weight(1f),
+                    record = record,
+                    subjectMaxLines = 3,
+                    displayTeachers = true,
+                )
+                LaunchLinkIcon(record)
+            }
 
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 10.dp),
@@ -226,5 +246,27 @@ internal fun SubjectDialogCard(record: AttendanceRecord, score: Int, cardColors:
                 SubjectScore(modifier = Modifier.weight(1f), score = score)
             }
         }
+    }
+}
+
+@Composable
+private fun LaunchLinkIcon(record: AttendanceRecord) {
+    val handler = LocalUriHandler.current
+    val scope = rememberCoroutineScope()
+
+    IconButton(
+        onClick = {
+            scope.launch {
+                val linkString = record.getSyllabusLink()
+
+                if (linkString != null) handler.openUri(linkString)
+            }
+        }
+    ) {
+        Icon(
+            modifier = Modifier.height(20.dp).width(20.dp),
+            imageVector = iconOpenInBrowser,
+            contentDescription = "Syllabus link",
+        )
     }
 }
