@@ -1,21 +1,29 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# --- JNA (Java Native Access) ---
+# Preserve all JNA classes, methods, and fields required by native libjnidispatch.so
+-keep class com.sun.jna.** { *; }
+-keepclassmembers class com.sun.jna.** { *; }
+-dontwarn com.sun.jna.**
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Preserve native methods across all classes
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# --- UniFFI Bindings & JNA Structure/Callback mappings ---
+# Preserve Structure fields and Callback interfaces used by JNA
+-keep class * extends com.sun.jna.Structure { *; }
+-keepclassmembers class * extends com.sun.jna.Structure { *; }
+-keep class * extends com.sun.jna.Callback { *; }
+-keepclassmembers class * extends com.sun.jna.Callback { *; }
+
+# Preserve UniFFI-generated bindings (e.g. sxcapi)
+-keep class sxcapi.** { *; }
+-keepclassmembers class sxcapi.** { *; }
+-dontwarn sxcapi.**
+
+# Keep generic signatures and reflection attributes
+-keepattributes Signature,InnerClasses,EnclosingMethod
+
+# Suppress optional desktop AWT references on Android
+-dontwarn java.awt.**
