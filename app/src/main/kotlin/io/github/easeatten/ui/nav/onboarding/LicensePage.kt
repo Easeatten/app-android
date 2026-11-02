@@ -52,7 +52,6 @@ fun LicensePage(navController: NavController) {
     val vm: OnboardingViewModel = viewModel(factory = vmFactory)
 
     val state by vm.state.collectAsStateWithLifecycle()
-    val settings by vm.settings.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = { TopBar(navController) },
