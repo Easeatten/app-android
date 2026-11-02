@@ -211,16 +211,16 @@ internal fun SubjectDialogCard(record: AttendanceRecord, score: Int, cardColors:
                     modifier = Modifier.weight(1f),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(text = "${record.delivered}", style = MaterialTheme.typography.titleLarge)
-                    Text(text = "Delivered", style = MaterialTheme.typography.labelLarge)
+                    Text(text = "${record.attended}", style = MaterialTheme.typography.titleLarge)
+                    Text(text = "Attended", style = MaterialTheme.typography.labelLarge)
                 }
 
                 Column(
                     modifier = Modifier.weight(1f),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(text = "${record.attended}", style = MaterialTheme.typography.titleLarge)
-                    Text(text = "Attended", style = MaterialTheme.typography.labelLarge)
+                    Text(text = "${record.delivered}", style = MaterialTheme.typography.titleLarge)
+                    Text(text = "Delivered", style = MaterialTheme.typography.labelLarge)
                 }
 
                 SubjectScore(modifier = Modifier.weight(1f), score = score)
