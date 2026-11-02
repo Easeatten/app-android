@@ -1,5 +1,7 @@
 package io.github.easeatten.ui.viewmodels.nav
 
+import android.content.Context
+import android.os.PowerManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -18,7 +20,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class HomeState(val navDestination: HomeDestination = HomeDestination.DASHBOARD)
+data class HomeState(
+    val navDestination: HomeDestination = HomeDestination.DASHBOARD,
+    val isIgnoringBatteryOptimization: Boolean = false,
+)
 
 class HomeViewModel(
     private val settingsRepository: SettingsRepository,
@@ -66,6 +71,16 @@ class HomeViewModel(
 
     fun updateTypography(typography: Typography) {
         viewModelScope.launch { settingsRepository.updateThemeTypography(typography) }
+    }
+
+    fun updateAutoRefreshPreference(value: Boolean) {
+        viewModelScope.launch { settingsRepository.updateAutoRefreshPreference(value) }
+    }
+
+    fun updateBatteryOptimizationsSettings(context: Context) {
+        val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+        val boolValue = pm.isIgnoringBatteryOptimizations(context.packageName)
+        statePrivate.update { it.copy(isIgnoringBatteryOptimization = boolValue) }
     }
 
     fun logout() {
